@@ -12,11 +12,13 @@
 <style>
   :root{
     --paper:#FFFFFF; --surface:#FFFFFF; --surface-2:#F6F7F5;
-    --ink:#1A211E; --ink-soft:#4E5A55; --ink-faint:#7E8983;
-    --line:#E4E7E2; --line-strong:#CBD0C8;
+    --ink:#1F2422; --ink-soft:#55605B; --ink-faint:#828C87;
+    --line:#E6E8E3; --line-strong:#CCD1C9;
     --bar:#FBE1C6; --bar-ink:#3B2A15; --bar-sub:#8A6942; --bar-line:#D9B489; --bar-edge:#E09A4B;
-    --accent:#0E6B54; --accent-d:#0A5140; --accent-soft:#E2EFE9;
-    --soon:#A5610A; --soon-soft:#F8EEDB; --soon-line:#E3CFA4;
+    --accent:#C2600F; --accent-d:#9C4C08; --accent-soft:#FCEEDD;
+    --tint:#FDF8F2; --tint-line:#EFE3D4;
+    --soon:#B0700F; --soon-soft:#FDF1DA; --soon-line:#E8CFA1;
+    --done:#4A6B62; --done-soft:#EEF3F1; --done-line:#D3E0DB;
     --danger:#B3261E; --danger-soft:#FBECEA;
     --shadow:0 1px 2px rgba(26,33,30,.05);
     --mono:ui-monospace,"Cascadia Mono",Consolas,"SFMono-Regular",Menlo,monospace;
@@ -52,8 +54,8 @@
   main{max-width:1000px;margin:0 auto;padding:22px 20px 60px}
 
   /* ---------------- 篩選列 ---------------- */
-  .filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:18px}
-  .flabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .filters{background:var(--tint);border:1px solid var(--tint-line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:18px}
+  .flabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
   .frow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
   .f{display:flex;flex-direction:column;gap:5px;min-width:140px}
   .f label{font-size:12.5px;color:var(--ink-soft)}
@@ -69,31 +71,37 @@
   /* ---------------- 分組標題 ---------------- */
   .group{display:flex;align-items:center;gap:12px;margin:26px 0 12px}
   .group:first-of-type{margin-top:4px}
-  .group h2{margin:0;font-size:13px;font-weight:700;letter-spacing:.1em;font-family:var(--mono);text-transform:uppercase;white-space:nowrap}
-  .group .rule{flex:1;height:1px;background:var(--line-strong)}
-  .group.soon h2{color:var(--soon)}
-  .group.done h2{color:var(--ink-faint)}
+  .group h2{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.14em;white-space:nowrap;
+    padding:4px 12px;border-radius:20px;border:1px solid}
+  .group .rule{flex:1;height:1px}
+  .group.soon h2{color:var(--soon);background:var(--soon-soft);border-color:var(--soon-line)}
+  .group.soon .rule{background:linear-gradient(90deg,var(--soon-line),transparent)}
+  .group.done h2{color:var(--done);background:var(--done-soft);border-color:var(--done-line)}
+  .group.done .rule{background:linear-gradient(90deg,var(--done-line),transparent)}
 
   /* ---------------- 公告卡 ---------------- */
   .cards{display:flex;flex-direction:column;gap:12px}
-  .card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line-strong);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px}
-  .card.is-soon{border-left-color:var(--soon)}
-  .card.is-done{border-left-color:var(--line-strong)}
-  .c-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
-  .c-cat{font-weight:700;font-size:15.5px}
-  .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 6px;border-radius:2px;background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
-  .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 7px;border-radius:2px;margin-left:auto}
+  /* --ch = 系統分類的色相，由 JS 依分類名稱決定，同一個系統永遠同一色 */
+  .card{background:var(--surface);border:1px solid var(--line);border-left:4px solid hsl(var(--ch),42%,52%);
+    border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;transition:box-shadow .15s,border-color .15s}
+  .card:hover{border-color:var(--line-strong);border-left-color:hsl(var(--ch),48%,44%);box-shadow:0 2px 10px rgba(26,33,30,.09)}
+  .c-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .c-cat{font-weight:700;font-size:15.5px;color:hsl(var(--ch),55%,29%);display:inline-flex;align-items:center;gap:7px}
+  .c-cat::before{content:"";width:9px;height:9px;border-radius:50%;background:hsl(var(--ch),45%,48%);flex:none}
+  .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 6px;border-radius:2px;
+    background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+  .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 8px;border-radius:20px;margin-left:auto;font-weight:600}
   .pill.soon{background:var(--soon-soft);color:var(--soon);border:1px solid var(--soon-line)}
-  .pill.done{background:var(--surface-2);color:var(--ink-faint)}
-  .c-when{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;background:var(--surface-2);
-    border:1px solid var(--line);border-left:3px solid var(--line-strong);border-radius:var(--r);
+  .pill.done{background:var(--done-soft);color:var(--done);border:1px solid var(--done-line)}
+  .c-when{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;background:var(--done-soft);
+    border:1px solid var(--done-line);border-left:3px solid var(--done);border-radius:var(--r);
     padding:8px 12px;margin-bottom:12px}
-  .c-when .lab{font-size:11.5px;letter-spacing:.14em;color:var(--ink-faint);white-space:nowrap}
+  .c-when .lab{font-size:11.5px;letter-spacing:.14em;color:var(--done);white-space:nowrap}
   .c-when b{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--ink);
     font-variant-numeric:tabular-nums;line-height:1.35}
   .card.is-soon .c-when{background:var(--soon-soft);border-color:var(--soon-line);border-left-color:var(--soon)}
-  .card.is-soon .c-when .lab,
-  .card.is-soon .c-when b{color:var(--soon)}
+  .card.is-soon .c-when .lab{color:var(--soon)}
+  .card.is-soon .c-when b{color:#7A4A05}
   .c-body{margin:0;padding-left:18px}
   .c-body li{margin:3px 0}
   .c-plain{margin:0;white-space:pre-wrap}
@@ -336,6 +344,7 @@ async function load(){
     return;
   }
   rows = data || [];
+  assignHues();
   syncCategoryOptions();
   render();
 }
@@ -394,6 +403,28 @@ function render(){
   $("list").innerHTML = html;
 }
 
+/* 系統分類自動配色：分類名稱決定色相，新增分類不必改程式。
+   色盤刻意避開橘黃區間（頁首與「即將更版」已佔用），才不會跟狀態顏色混淆。
+   同色時往後取下一個空位，確保畫面上同時存在的分類彼此不同色。 */
+const CAT_HUES = [200, 225, 260, 290, 320, 345, 100, 135, 165, 185];
+const hashOf = s => { let n = 0; for(const ch of String(s||"")) n = (n*31 + ch.codePointAt(0)) >>> 0; return n; };
+let hueMap = new Map();
+
+function assignHues(){
+  hueMap = new Map();
+  const used = new Set();
+  const cats = [...new Set(rows.map(r=>r.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  for(const c of cats){
+    const start = hashOf(c) % CAT_HUES.length;
+    for(let k = 0; k < CAT_HUES.length; k++){
+      const h = CAT_HUES[(start + k) % CAT_HUES.length];
+      if(!used.has(h)){ used.add(h); hueMap.set(c, h); break; }
+    }
+    if(!hueMap.has(c)) hueMap.set(c, CAT_HUES[start]);   // 分類數超過色數才會重複
+  }
+}
+const catHue = name => hueMap.get(name) ?? CAT_HUES[hashOf(name) % CAT_HUES.length];
+
 function card(r, isSoon){
   const venues = (r.venues||[]).map(v=>`<span class="chip">${esc(String(v).toUpperCase())}</span>`).join("");
   const lines  = String(r.content||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
@@ -404,7 +435,7 @@ function card(r, isSoon){
   const acts   = session ? `<span class="acts">
         <button type="button" class="btn-ghost btn-sm" data-edit="${esc(r.id)}">編輯</button>
         <button type="button" class="btn-danger btn-sm" data-del="${esc(r.id)}">刪除</button></span>` : "";
-  return `<article class="card ${isSoon?"is-soon":"is-done"}">
+  return `<article class="card ${isSoon?"is-soon":"is-done"}" style="--ch:${catHue(r.category)}">
     <div class="c-top">
       <span class="c-cat">${esc(r.category||"未分類")}</span>${venues}
       <span class="pill ${isSoon?"soon":"done"}">${isSoon?"即將更版":"已更版"}</span>
