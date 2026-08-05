@@ -285,7 +285,7 @@ const VENUES = CFG.venues || ["CB","MX","SIV"];
 const DEF_T  = CFG.defaultReleaseTime || "08:00";
 const WD     = ["日","一","二","三","四","五","六"];
 
-let sb = null, rows = [], session = null, editingId = null;
+let sb = null, rows = [], session = null, editingId = null, lastSig = null;
 
 /* ---------- 日期工具（一律當作本地時間，不做時區轉換） ---------- */
 const pad = n => String(n).padStart(2,"0");
@@ -378,6 +378,7 @@ function render(){
   const soon = list.filter(r =>  isSoon(r, now)).sort((a,b) => tsKey(a).localeCompare(tsKey(b)));  // 最近的先上
   const done = list.filter(r => !isSoon(r, now)).sort((a,b) => tsKey(b).localeCompare(tsKey(a)));  // 最新的先看
 
+  lastSig = statusSig(now);
   $("count").textContent = `共 ${list.length} 筆`;
   $("hint").textContent  = (list.length !== rows.length) ? `（全部 ${rows.length} 筆，已套用查詢條件）` : "";
 
@@ -482,6 +483,13 @@ $("loginForm").addEventListener("submit", async e => {
   $("liPw").value = "";
   $("loginDlg").close();
 });
+
+/* 每分鐘重算一次狀態：時間跨過某筆的上線時刻時，該筆自動從「即將更版」移到「已更版」。
+   只有在分組結果真的改變時才重畫，避免每分鐘打斷現場的捲動位置。 */
+const statusSig = now => rows.map(r => isSoon(r, now) ? "1" : "0").join("");
+function tick(){ if(rows.length && statusSig(nowKey()) !== lastSig) render(); }
+setInterval(tick, 60000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) tick(); });
 
 $("newBtn").addEventListener("click", () => openForm(null));
 $("noteForm").addEventListener("submit", e => { e.preventDefault(); saveForm(); });
