@@ -75,7 +75,10 @@
 
   .filters{background:var(--tint);border:1px solid var(--tint-line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:18px}
   .flabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  /* 兩列固定分組：上列關鍵字與日期，下列系統分類 → 場地 → 狀態，
+     避免視窗寬度不同時分類與場地被拆到不同行 */
   .frow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .frow + .frow{margin-top:12px}
   .f{display:flex;flex-direction:column;gap:5px;min-width:140px}
   .f label{font-size:12.5px;color:var(--ink-soft)}
   .f.dates{min-width:250px}
@@ -219,6 +222,8 @@
           <input type="date" id="fTo" aria-label="結束日期">
         </div>
       </div>
+    </div>
+    <div class="frow">
       <div class="f">
         <label for="fCat">系統分類</label>
         <select id="fCat"><option value="">全部</option></select>
