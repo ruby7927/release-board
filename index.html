@@ -13,7 +13,7 @@
     --paper:#F4F4F0; --surface:#FFFFFF; --surface-2:#EDEEE9;
     --ink:#1A211E; --ink-soft:#4E5A55; --ink-faint:#7E8983;
     --line:#DDDFD8; --line-strong:#C4C8BF;
-    --bar:#16211D; --bar-ink:#E9EDE9;
+    --bar:#FBE1C6; --bar-ink:#3B2A15; --bar-sub:#8A6942; --bar-line:#D9B489; --bar-edge:#E09A4B;
     --accent:#0E6B54; --accent-d:#0A5140; --accent-soft:#E2EFE9;
     --soon:#A5610A; --soon-soft:#F8EEDB; --soon-line:#E3CFA4;
     --danger:#B3261E; --danger-soft:#FBECEA;
@@ -27,7 +27,7 @@
       --paper:#0F1412; --surface:#171E1B; --surface-2:#1D2622;
       --ink:#E8EDE9; --ink-soft:#A5B2AC; --ink-faint:#7C8883;
       --line:#28322E; --line-strong:#38443E;
-      --bar:#0A0F0D; --bar-ink:#E8EDE9;
+      --bar:#3B2A17; --bar-ink:#F7E6CE; --bar-sub:#BC9C74; --bar-edge:#B9803C; --bar-line:#5C452A;
       --accent:#59C3A4; --accent-d:#7BD5BA; --accent-soft:#15302A;
       --soon:#DBA850; --soon-soft:#2A2317; --soon-line:#4B3D21;
       --danger:#E8796F; --danger-soft:#2E1917;
@@ -52,14 +52,15 @@
   .btn-danger:hover{background:var(--danger-soft);border-color:var(--danger)}
 
   /* ---------------- 頁首 ---------------- */
-  header{background:var(--bar);color:var(--bar-ink);border-bottom:3px solid var(--accent)}
+  header{background:var(--bar);color:var(--bar-ink);border-bottom:3px solid var(--bar-edge)}
   .hwrap{max-width:1000px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .brand h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.06em}
-  .brand p{margin:2px 0 0;font-size:12.5px;color:#93A29C;letter-spacing:.02em}
+  .brand p{margin:2px 0 0;font-size:12.5px;color:var(--bar-sub);letter-spacing:.02em}
   .spacer{flex:1}
-  .hwrap .who{font-family:var(--mono);font-size:11.5px;color:#93A29C;letter-spacing:.04em}
-  .hwrap .btn-ghost{border-color:#39463F;color:#C9D3CE}
-  .hwrap .btn-ghost:hover{border-color:var(--accent);color:#fff}
+  .hwrap .who{font-family:var(--mono);font-size:11.5px;color:var(--bar-sub);letter-spacing:.04em}
+  .hwrap .btn-ghost{border-color:var(--bar-line);color:var(--bar-ink)}
+  .hwrap .btn-ghost:hover{border-color:var(--bar-ink);background:rgba(255,255,255,.35)}
+  @media (prefers-color-scheme:dark){.hwrap .btn-ghost:hover{background:rgba(255,255,255,.08)}}
 
   main{max-width:1000px;margin:0 auto;padding:22px 20px 60px}
 
@@ -97,8 +98,15 @@
   .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 7px;border-radius:2px;margin-left:auto}
   .pill.soon{background:var(--soon-soft);color:var(--soon);border:1px solid var(--soon-line)}
   .pill.done{background:var(--surface-2);color:var(--ink-faint)}
-  .c-when{font-family:var(--mono);font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums;margin-bottom:10px}
-  .c-when b{color:var(--ink);font-weight:600}
+  .c-when{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;background:var(--surface-2);
+    border:1px solid var(--line);border-left:3px solid var(--line-strong);border-radius:var(--r);
+    padding:8px 12px;margin-bottom:12px}
+  .c-when .lab{font-size:11.5px;letter-spacing:.14em;color:var(--ink-faint);white-space:nowrap}
+  .c-when b{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--ink);
+    font-variant-numeric:tabular-nums;line-height:1.35}
+  .card.is-soon .c-when{background:var(--soon-soft);border-color:var(--soon-line);border-left-color:var(--soon)}
+  .card.is-soon .c-when .lab,
+  .card.is-soon .c-when b{color:var(--soon)}
   .c-body{margin:0;padding-left:18px}
   .c-body li{margin:3px 0}
   .c-plain{margin:0;white-space:pre-wrap}
@@ -414,7 +422,7 @@ function card(r, isSoon){
       <span class="c-cat">${esc(r.category||"未分類")}</span>${venues}
       <span class="pill ${isSoon?"soon":"done"}">${isSoon?"即將更版":"已更版"}</span>
     </div>
-    <div class="c-when">上正式系統　<b>${esc(fmtWhen(r.release_at))}</b></div>
+    <div class="c-when"><span class="lab">上正式系統</span><b>${esc(fmtWhen(r.release_at))}</b></div>
     ${body}${link}
     <div class="c-foot"><span class="meta">建立日期 ${esc(r.created_date||"—")}</span>${acts}</div>
   </article>`;
