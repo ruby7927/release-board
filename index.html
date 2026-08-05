@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>更版公告 — 每週系統更版看板</title>
+<meta name="description" content="每週系統更版公告，現場人員免登入查詢。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  :root{
+    --paper:#F4F4F0; --surface:#FFFFFF; --surface-2:#EDEEE9;
+    --ink:#1A211E; --ink-soft:#4E5A55; --ink-faint:#7E8983;
+    --line:#DDDFD8; --line-strong:#C4C8BF;
+    --bar:#16211D; --bar-ink:#E9EDE9;
+    --accent:#0E6B54; --accent-d:#0A5140; --accent-soft:#E2EFE9;
+    --soon:#A5610A; --soon-soft:#F8EEDB; --soon-line:#E3CFA4;
+    --danger:#B3261E; --danger-soft:#FBECEA;
+    --shadow:0 1px 2px rgba(26,33,30,.05);
+    --mono:ui-monospace,"Cascadia Mono",Consolas,"SFMono-Regular",Menlo,monospace;
+    --sans:"Microsoft JhengHei UI","Microsoft JhengHei","PingFang TC","Noto Sans TC","Segoe UI",system-ui,sans-serif;
+    --r:3px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0F1412; --surface:#171E1B; --surface-2:#1D2622;
+      --ink:#E8EDE9; --ink-soft:#A5B2AC; --ink-faint:#7C8883;
+      --line:#28322E; --line-strong:#38443E;
+      --bar:#0A0F0D; --bar-ink:#E8EDE9;
+      --accent:#59C3A4; --accent-d:#7BD5BA; --accent-soft:#15302A;
+      --soon:#DBA850; --soon-soft:#2A2317; --soon-line:#4B3D21;
+      --danger:#E8796F; --danger-soft:#2E1917;
+      --shadow:0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.7}
+  button{font-family:inherit;font-size:14px;cursor:pointer;border-radius:var(--r);border:1px solid transparent;padding:8px 14px;transition:.14s}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);padding:8px 10px;width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  .hidden{display:none !important}
+
+  .btn-primary{background:var(--accent);color:#fff;font-weight:600}
+  .btn-primary:hover{background:var(--accent-d)}
+  @media (prefers-color-scheme:dark){.btn-primary{color:#0A1512}}
+  .btn-ghost{background:transparent;border-color:var(--line-strong);color:var(--ink-soft)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-sm{padding:4px 10px;font-size:12.5px}
+  .btn-danger{background:transparent;border-color:var(--line-strong);color:var(--danger)}
+  .btn-danger:hover{background:var(--danger-soft);border-color:var(--danger)}
+
+  /* ---------------- 頁首 ---------------- */
+  header{background:var(--bar);color:var(--bar-ink);border-bottom:3px solid var(--accent)}
+  .hwrap{max-width:1000px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.06em}
+  .brand p{margin:2px 0 0;font-size:12.5px;color:#93A29C;letter-spacing:.02em}
+  .spacer{flex:1}
+  .hwrap .who{font-family:var(--mono);font-size:11.5px;color:#93A29C;letter-spacing:.04em}
+  .hwrap .btn-ghost{border-color:#39463F;color:#C9D3CE}
+  .hwrap .btn-ghost:hover{border-color:var(--accent);color:#fff}
+
+  main{max-width:1000px;margin:0 auto;padding:22px 20px 60px}
+
+  /* ---------------- 篩選列 ---------------- */
+  .filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:18px}
+  .flabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .frow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .f{display:flex;flex-direction:column;gap:5px;min-width:140px}
+  .f label{font-size:12.5px;color:var(--ink-soft)}
+  .f.dates{min-width:250px}
+  .drange{display:flex;align-items:center;gap:6px}
+  .drange span{color:var(--ink-faint);font-size:13px}
+  .frow input[type=date]{font-family:var(--mono);font-size:13px}
+
+  .summary{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .summary .n{font-family:var(--mono);font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .summary .hint{font-size:12.5px;color:var(--ink-faint)}
+
+  /* ---------------- 分組標題 ---------------- */
+  .group{display:flex;align-items:center;gap:12px;margin:26px 0 12px}
+  .group:first-of-type{margin-top:4px}
+  .group h2{margin:0;font-size:13px;font-weight:700;letter-spacing:.1em;font-family:var(--mono);text-transform:uppercase;white-space:nowrap}
+  .group .rule{flex:1;height:1px;background:var(--line-strong)}
+  .group.soon h2{color:var(--soon)}
+  .group.done h2{color:var(--ink-faint)}
+
+  /* ---------------- 公告卡 ---------------- */
+  .cards{display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line-strong);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px}
+  .card.is-soon{border-left-color:var(--soon)}
+  .card.is-done{border-left-color:var(--line-strong)}
+  .c-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+  .c-cat{font-weight:700;font-size:15.5px}
+  .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 6px;border-radius:2px;background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
+  .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 7px;border-radius:2px;margin-left:auto}
+  .pill.soon{background:var(--soon-soft);color:var(--soon);border:1px solid var(--soon-line)}
+  .pill.done{background:var(--surface-2);color:var(--ink-faint)}
+  .c-when{font-family:var(--mono);font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums;margin-bottom:10px}
+  .c-when b{color:var(--ink);font-weight:600}
+  .c-body{margin:0;padding-left:18px}
+  .c-body li{margin:3px 0}
+  .c-plain{margin:0;white-space:pre-wrap}
+  .c-link{display:inline-block;margin-top:9px;font-size:13.5px;color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+  .c-link:hover{border-bottom-color:var(--accent)}
+  .c-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:12px;padding-top:9px}
+  .c-foot .meta{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.03em}
+  .c-foot .acts{margin-left:auto;display:flex;gap:6px}
+
+  .empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r);padding:38px 20px;text-align:center;color:var(--ink-faint)}
+  .empty b{display:block;color:var(--ink-soft);font-size:15px;margin-bottom:4px}
+
+  /* ---------------- 對話框 ---------------- */
+  dialog{border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 28px));box-shadow:0 20px 60px -20px rgba(0,0,0,.45)}
+  dialog::backdrop{background:rgba(12,18,16,.55)}
+  .d-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .d-head h3{margin:0;font-size:16px}
+  .d-head .x{margin-left:auto;background:transparent;border:none;color:var(--ink-faint);font-size:20px;line-height:1;padding:2px 6px}
+  .d-head .x:hover{color:var(--ink)}
+  .d-body{padding:18px 20px;max-height:min(70vh,640px);overflow-y:auto}
+  .d-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+  .fld{margin-bottom:14px}
+  .fld label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px}
+  .fld label .req{color:var(--danger);margin-left:2px}
+  .fld .tip{font-size:11.5px;color:var(--ink-faint);margin-top:4px;line-height:1.5}
+  .two{display:flex;gap:10px}
+  .two > *{flex:1}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chips label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);border-radius:var(--r);padding:6px 11px;cursor:pointer;font-family:var(--mono);font-size:13px;letter-spacing:.06em;user-select:none}
+  .chips label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .chips input{width:auto;margin:0;accent-color:var(--accent)}
+  textarea{min-height:120px;resize:vertical;line-height:1.7}
+  .msg{font-size:13px;padding:9px 11px;border-radius:var(--r);margin-top:12px}
+  .msg.err{background:var(--danger-soft);color:var(--danger)}
+
+  .setup{background:var(--soon-soft);border:1px solid var(--soon-line);border-radius:var(--r);padding:16px 18px;margin-bottom:18px;font-size:14px}
+  .setup b{color:var(--soon)}
+  .setup code{font-family:var(--mono);font-size:12.5px;background:var(--surface);padding:1px 5px;border-radius:2px;border:1px solid var(--line)}
+
+  @media (max-width:640px){
+    .f,.f.dates{min-width:100%}
+    .brand h1{font-size:17px}
+    .pill{margin-left:0}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="brand">
+      <h1>更版公告</h1>
+      <p>每週系統更版內容 · 現場查詢看板</p>
+    </div>
+    <div class="spacer"></div>
+    <span class="who hidden" id="who"></span>
+    <button class="btn-primary hidden" id="newBtn">＋ 新增公告</button>
+    <button class="btn-ghost" id="loginBtn">管理者登入</button>
+    <button class="btn-ghost hidden" id="logoutBtn">登出</button>
+  </div>
+</header>
+
+<main>
+  <div class="setup hidden" id="setupNotice">
+    <b>尚未完成設定</b><br>
+    請開啟 <code>config.js</code>，填入 Supabase 的 Project URL 與 anon key，並在 SQL Editor 執行 <code>schema.sql</code>。
+  </div>
+
+  <section class="filters">
+    <div class="flabel">查詢條件</div>
+    <div class="frow">
+      <div class="f dates">
+        <label for="fFrom">上正式系統日期</label>
+        <div class="drange">
+          <input type="date" id="fFrom" aria-label="起始日期">
+          <span>—</span>
+          <input type="date" id="fTo" aria-label="結束日期">
+        </div>
+      </div>
+      <div class="f">
+        <label for="fCat">系統分類</label>
+        <select id="fCat"><option value="">全部</option></select>
+      </div>
+      <div class="f">
+        <label for="fVenue">場地</label>
+        <select id="fVenue"><option value="">全部</option></select>
+      </div>
+      <button class="btn-ghost" id="clearBtn">清除條件</button>
+    </div>
+  </section>
+
+  <div class="summary">
+    <span class="n" id="count">載入中…</span>
+    <span class="hint" id="hint"></span>
+  </div>
+
+  <div id="list"></div>
+</main>
+
+<!-- 登入 -->
+<dialog id="loginDlg">
+  <form method="dialog" id="loginForm">
+    <div class="d-head"><h3>管理者登入</h3><button type="button" class="x" data-close="loginDlg" aria-label="關閉">×</button></div>
+    <div class="d-body">
+      <div class="fld"><label for="liEmail">Email</label><input type="email" id="liEmail" autocomplete="username" required></div>
+      <div class="fld"><label for="liPw">密碼</label><input type="password" id="liPw" autocomplete="current-password" required></div>
+      <div class="msg err hidden" id="liMsg"></div>
+    </div>
+    <div class="d-foot">
+      <button type="button" class="btn-ghost" data-close="loginDlg">取消</button>
+      <button type="submit" class="btn-primary" id="liSubmit">登入</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 新增／編輯 -->
+<dialog id="formDlg">
+  <form method="dialog" id="noteForm">
+    <div class="d-head"><h3 id="fmTitle">新增公告</h3><button type="button" class="x" data-close="formDlg" aria-label="關閉">×</button></div>
+    <div class="d-body">
+      <div class="two">
+        <div class="fld">
+          <label for="inCreated">建立日期<span class="req">*</span></label>
+          <input type="date" id="inCreated" required>
+        </div>
+        <div class="fld">
+          <label for="inCat">系統分類<span class="req">*</span></label>
+          <input type="text" id="inCat" list="catList" placeholder="例：荷官排班系統" required>
+          <datalist id="catList"></datalist>
+        </div>
+      </div>
+
+      <div class="fld">
+        <label>上正式系統日期及時間<span class="req">*</span></label>
+        <div class="two">
+          <input type="date" id="inDate" required>
+          <input type="time" id="inTime" required>
+        </div>
+        <div class="tip">時間預設 08:00，如有特殊安排再調整。</div>
+      </div>
+
+      <div class="fld">
+        <label>場地<span class="req">*</span></label>
+        <div class="chips" id="inVenues"></div>
+        <div class="tip">可複選。全部場地都受影響就三個都勾，留空會在場地篩選時被漏掉。</div>
+      </div>
+
+      <div class="fld">
+        <label for="inContent">更版內容<span class="req">*</span></label>
+        <textarea id="inContent" placeholder="一項一行，例：&#10;排班表新增「代班」標記，代班人員以橘色顯示&#10;修正跨月查詢時筆數不完整的問題" required></textarea>
+        <div class="tip">寫給沒參與需求討論的現場同仁看：講畫面或流程哪裡不一樣，避免程式術語與票號。</div>
+      </div>
+
+      <div class="fld">
+        <label for="inLink">連結</label>
+        <input type="url" id="inLink" placeholder="https://…（選填）">
+        <div class="tip">需求單、操作說明或畫面截圖。請確認現場未登入也開得起來。</div>
+      </div>
+
+      <div class="msg err hidden" id="fmMsg"></div>
+    </div>
+    <div class="d-foot">
+      <button type="button" class="btn-ghost" data-close="formDlg">取消</button>
+      <button type="submit" class="btn-primary" id="fmSubmit">儲存</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const CFG    = window.APP_CONFIG || {};
+const VENUES = CFG.venues || ["CB","MX","SIV"];
+const DEF_T  = CFG.defaultReleaseTime || "08:00";
+const WD     = ["日","一","二","三","四","五","六"];
+
+let sb = null, rows = [], session = null, editingId = null;
+
+/* ---------- 日期工具（一律當作本地時間，不做時區轉換） ---------- */
+const pad = n => String(n).padStart(2,"0");
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+function splitTs(ts){                       // "2026-08-11T08:00:00" → ["2026-08-11","08:00"]
+  const s = String(ts || "").replace(" ","T");
+  return [s.slice(0,10), s.slice(11,16) || "00:00"];
+}
+function fmtWhen(ts){
+  const [d,t] = splitTs(ts);
+  const [y,m,dd] = d.split("-").map(Number);
+  const w = (y && m && dd) ? WD[new Date(y, m-1, dd).getDay()] : "";
+  return `${d}（${w}）${t}`;
+}
+
+/* ---------- 啟動 ---------- */
+function boot(){
+  const c = window.SUPABASE_CONFIG || {};
+  if(!c.url || !c.anonKey || c.url.startsWith("PASTE")){
+    $("setupNotice").classList.remove("hidden");
+    $("count").textContent = "";
+    return;
+  }
+  sb = supabase.createClient(c.url, c.anonKey);
+
+  sb.auth.onAuthStateChange((_e, s) => { session = s; applyAuthUI(); render(); });
+  sb.auth.getSession().then(({data}) => { session = data.session; applyAuthUI(); });
+
+  buildVenueInputs();
+  load();
+}
+
+function applyAuthUI(){
+  const on = !!session;
+  $("newBtn").classList.toggle("hidden", !on);
+  $("logoutBtn").classList.toggle("hidden", !on);
+  $("loginBtn").classList.toggle("hidden", on);
+  const who = $("who");
+  who.classList.toggle("hidden", !on);
+  who.textContent = on ? session.user.email : "";
+}
+
+/* ---------- 讀取資料 ---------- */
+async function load(){
+  const {data, error} = await sb.from("release_notes").select("*").order("release_at",{ascending:false});
+  if(error){
+    $("count").textContent = "";
+    $("list").innerHTML = `<div class="empty"><b>資料讀取失敗</b>${esc(error.message)}</div>`;
+    return;
+  }
+  rows = data || [];
+  syncCategoryOptions();
+  render();
+}
+
+function syncCategoryOptions(){
+  const cats = [...new Set(rows.map(r => r.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  const sel = $("fCat"), keep = sel.value;
+  sel.innerHTML = `<option value="">全部</option>` + cats.map(c=>`<option>${esc(c)}</option>`).join("");
+  sel.value = cats.includes(keep) ? keep : "";
+  const hints = [...new Set([...cats, ...(CFG.categoryHints||[])])];
+  $("catList").innerHTML = hints.map(c=>`<option value="${esc(c)}">`).join("");
+}
+
+function buildVenueInputs(){
+  $("inVenues").innerHTML = VENUES.map(v=>`<label><input type="checkbox" value="${esc(v)}"> ${esc(v)}</label>`).join("");
+  $("fVenue").innerHTML = `<option value="">全部</option>` + VENUES.map(v=>`<option>${esc(v)}</option>`).join("");
+}
+
+/* ---------- 篩選與繪製 ---------- */
+function passFilter(r){
+  const from = $("fFrom").value, to = $("fTo").value, cat = $("fCat").value, ven = $("fVenue").value;
+  const d = splitTs(r.release_at)[0];
+  if(from && d < from) return false;
+  if(to   && d > to)   return false;
+  if(cat  && r.category !== cat) return false;
+  if(ven  && !(r.venues||[]).some(v => String(v).toUpperCase() === ven.toUpperCase())) return false;
+  return true;
+}
+
+function render(){
+  const list = rows.filter(passFilter);
+  const today = todayStr();
+  const soon = list.filter(r => splitTs(r.release_at)[0] >= today)
+                   .sort((a,b) => String(a.release_at).localeCompare(String(b.release_at)));   // 最近的先上
+  const done = list.filter(r => splitTs(r.release_at)[0] <  today)
+                   .sort((a,b) => String(b.release_at).localeCompare(String(a.release_at)));   // 最新的先看
+
+  $("count").textContent = `共 ${list.length} 筆`;
+  $("hint").textContent  = (list.length !== rows.length) ? `（全部 ${rows.length} 筆，已套用查詢條件）` : "";
+
+  if(!list.length){
+    $("list").innerHTML = rows.length
+      ? `<div class="empty"><b>查無符合條件的公告</b>試著清除日期區間，或把場地、系統分類改回「全部」。</div>`
+      : `<div class="empty"><b>目前沒有公告</b>管理者登入後即可新增第一筆更版公告。</div>`;
+    return;
+  }
+
+  let html = "";
+  if(soon.length){
+    html += `<div class="group soon"><h2>即將更版</h2><div class="rule"></div></div><div class="cards">${soon.map(r=>card(r,true)).join("")}</div>`;
+  }
+  if(done.length){
+    html += `<div class="group done"><h2>已更版</h2><div class="rule"></div></div><div class="cards">${done.map(r=>card(r,false)).join("")}</div>`;
+  }
+  $("list").innerHTML = html;
+}
+
+function card(r, isSoon){
+  const venues = (r.venues||[]).map(v=>`<span class="chip">${esc(String(v).toUpperCase())}</span>`).join("");
+  const lines  = String(r.content||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const body   = lines.length > 1
+      ? `<ul class="c-body">${lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`
+      : `<p class="c-plain">${esc(lines[0]||"")}</p>`;
+  const link   = r.link_url ? `<a class="c-link" href="${esc(r.link_url)}" target="_blank" rel="noopener">相關連結 →</a>` : "";
+  const acts   = session ? `<span class="acts">
+        <button type="button" class="btn-ghost btn-sm" data-edit="${esc(r.id)}">編輯</button>
+        <button type="button" class="btn-danger btn-sm" data-del="${esc(r.id)}">刪除</button></span>` : "";
+  return `<article class="card ${isSoon?"is-soon":"is-done"}">
+    <div class="c-top">
+      <span class="c-cat">${esc(r.category||"未分類")}</span>${venues}
+      <span class="pill ${isSoon?"soon":"done"}">${isSoon?"即將更版":"已更版"}</span>
+    </div>
+    <div class="c-when">上正式系統　<b>${esc(fmtWhen(r.release_at))}</b></div>
+    ${body}${link}
+    <div class="c-foot"><span class="meta">建立日期 ${esc(r.created_date||"—")}</span>${acts}</div>
+  </article>`;
+}
+
+/* ---------- 表單 ---------- */
+function openForm(rec){
+  editingId = rec ? rec.id : null;
+  $("fmTitle").textContent = rec ? "編輯公告" : "新增公告";
+  $("fmMsg").classList.add("hidden");
+  const [d,t] = rec ? splitTs(rec.release_at) : ["", ""];
+  $("inCreated").value = rec ? (rec.created_date || todayStr()) : todayStr();
+  $("inDate").value    = d;
+  $("inTime").value    = t || DEF_T;
+  $("inCat").value     = rec ? (rec.category || "") : "";
+  $("inContent").value = rec ? (rec.content  || "") : "";
+  $("inLink").value    = rec ? (rec.link_url || "") : "";
+  const picked = (rec?.venues || []).map(v=>String(v).toUpperCase());
+  document.querySelectorAll("#inVenues input").forEach(c => { c.checked = picked.includes(c.value.toUpperCase()); });
+  $("formDlg").showModal();
+}
+
+async function saveForm(){
+  const venues = [...document.querySelectorAll("#inVenues input:checked")].map(c=>c.value);
+  if(!venues.length){ return showMsg("fmMsg", "請至少勾選一個場地。"); }
+  const payload = {
+    created_date: $("inCreated").value,
+    release_at:   `${$("inDate").value}T${$("inTime").value}:00`,
+    category:     $("inCat").value.trim(),
+    venues,
+    content:      $("inContent").value.trim(),
+    link_url:     $("inLink").value.trim() || null
+  };
+  $("fmSubmit").disabled = true;
+  const q = editingId
+    ? sb.from("release_notes").update(payload).eq("id", editingId)
+    : sb.from("release_notes").insert(payload);
+  const {error} = await q;
+  $("fmSubmit").disabled = false;
+  if(error){ return showMsg("fmMsg", "儲存失敗：" + error.message); }
+  $("formDlg").close();
+  await load();
+}
+
+function showMsg(id, text){
+  const el = $(id); el.textContent = text; el.classList.remove("hidden");
+}
+
+/* ---------- 事件 ---------- */
+["fFrom","fTo","fCat","fVenue"].forEach(id => $(id).addEventListener("change", render));
+$("clearBtn").addEventListener("click", () => {
+  $("fFrom").value = ""; $("fTo").value = ""; $("fCat").value = ""; $("fVenue").value = "";
+  render();
+});
+
+$("loginBtn").addEventListener("click", () => { $("liMsg").classList.add("hidden"); $("loginDlg").showModal(); });
+$("logoutBtn").addEventListener("click", () => sb.auth.signOut());
+document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => $(b.dataset.close).close()));
+
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  $("liSubmit").disabled = true;
+  const {error} = await sb.auth.signInWithPassword({ email: $("liEmail").value.trim(), password: $("liPw").value });
+  $("liSubmit").disabled = false;
+  if(error){ return showMsg("liMsg", "登入失敗：" + error.message); }
+  $("liPw").value = "";
+  $("loginDlg").close();
+});
+
+$("newBtn").addEventListener("click", () => openForm(null));
+$("noteForm").addEventListener("submit", e => { e.preventDefault(); saveForm(); });
+
+$("list").addEventListener("click", async e => {
+  const ed = e.target.closest("[data-edit]"), dl = e.target.closest("[data-del]");
+  if(ed){ const r = rows.find(x => x.id === ed.dataset.edit); if(r) openForm(r); }
+  if(dl){
+    const r = rows.find(x => x.id === dl.dataset.del);
+    if(!r || !confirm(`確定刪除這筆公告？\n\n${r.category}　${fmtWhen(r.release_at)}`)) return;
+    const {error} = await sb.from("release_notes").delete().eq("id", r.id);
+    if(error) return alert("刪除失敗：" + error.message);
+    await load();
+  }
+});
+
+boot();
+</script>
+</body>
+</html>
