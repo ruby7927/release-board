@@ -23,8 +23,8 @@ window.APP_CONFIG = {
   // 新增或修改直接改這裡即可；url 留空會顯示「連結待補」且不可點
   // 分享設定記得設為「知道連結的任何人」，現場才開得起來
   manuals: [
-    { name: "荷官排班系統",              url: "" },
-    { name: "Incident Reporting System", url: "" },
-    { name: "請假系統",                  url: "" }
+    { name: "荷官排班系統",              url: "https://drive.google.com/drive/folders/1UAStUu8eOVIhpdZVxWVBhAz7qwbO-m1J?usp=sharing" },
+    { name: "Incident Reporting System", url: "https://drive.google.com/drive/folders/1nH5zuOBlMbiBGJzKmWs_AdNDzaT00IGL?usp=sharing" },
+    { name: "請假系統",                  url: "https://drive.google.com/drive/folders/1PMcD-UastGpJHLeyLjMS9rCzRPhdgDY8?usp=sharing" }
   ]
 };
