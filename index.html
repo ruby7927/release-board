@@ -79,6 +79,7 @@
   .f{display:flex;flex-direction:column;gap:5px;min-width:140px}
   .f label{font-size:12.5px;color:var(--ink-soft)}
   .f.dates{min-width:250px}
+  .f.grow{flex:1 1 240px}
   .drange{display:flex;align-items:center;gap:6px}
   .drange span{color:var(--ink-faint);font-size:13px}
   .frow input[type=date]{font-family:var(--mono);font-size:13px}
@@ -205,6 +206,10 @@
   <section class="filters">
     <div class="flabel">查詢條件</div>
     <div class="frow">
+      <div class="f grow">
+        <label for="fText">關鍵字</label>
+        <input type="search" id="fText" placeholder="搜尋更版內容、系統分類、場地…" autocomplete="off">
+      </div>
       <div class="f dates">
         <label for="fFrom">上正式系統日期</label>
         <div class="drange">
@@ -437,13 +442,20 @@ function buildVenueInputs(){
 }
 
 /* ---------- 篩選與繪製 ---------- */
+// 內容可能含格式標籤，搜尋前先還原成純文字
+const plainOf = r => [r.category, (r.venues||[]).join(" "), String(r.content||"").replace(/<[^>]*>/g, " ")]
+                       .join(" ").replace(/&nbsp;/g, " ").toLowerCase();
+
 function passFilter(r){
   const from = $("fFrom").value, to = $("fTo").value, cat = $("fCat").value, ven = $("fVenue").value;
+  const kw = $("fText").value.trim().toLowerCase();
   const d = splitTs(r.release_at)[0];
   if(from && d < from) return false;
   if(to   && d > to)   return false;
   if(cat  && r.category !== cat) return false;
   if(ven  && !(r.venues||[]).some(v => String(v).toUpperCase() === ven.toUpperCase())) return false;
+  // 空白分隔的多個關鍵字＝全部都要命中
+  if(kw && !kw.split(/\s+/).every(w => plainOf(r).includes(w))) return false;
   return true;
 }
 
@@ -461,7 +473,7 @@ function render(){
 
   if(!list.length){
     $("list").innerHTML = rows.length
-      ? `<div class="empty"><b>查無符合條件的公告</b>試著清除日期區間，或把場地、系統分類改回「全部」。</div>`
+      ? `<div class="empty"><b>查無符合條件的公告</b>試著換個關鍵字、清除日期區間，或把場地、系統分類改回「全部」。</div>`
       : `<div class="empty"><b>目前沒有公告</b>管理者登入後即可新增第一筆更版公告。</div>`;
     return;
   }
@@ -580,9 +592,11 @@ function showMsg(id, text){
 }
 
 /* ---------- 事件 ---------- */
-["fFrom","fTo","fCat","fVenue","fStatus"].forEach(id => $(id).addEventListener("change", render));
+const FILTERS = ["fText","fFrom","fTo","fCat","fVenue","fStatus"];
+FILTERS.forEach(id => $(id).addEventListener("change", render));
+$("fText").addEventListener("input", render);          // 關鍵字邊打邊篩
 $("clearBtn").addEventListener("click", () => {
-  ["fFrom","fTo","fCat","fVenue","fStatus"].forEach(id => { $(id).value = ""; });
+  FILTERS.forEach(id => { $(id).value = ""; });
   render();
 });
 
