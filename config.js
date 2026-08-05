@@ -11,7 +11,7 @@ window.SUPABASE_CONFIG = {
 
 window.APP_CONFIG = {
   // 場地代碼（表單複選、篩選下拉都吃這份清單）
-  venues: ["CB", "MX", "SIV"],
+  venues: ["CB", "MX", "SIV", "CL3"],
 
   // 上正式系統時間的預設值
   defaultReleaseTime: "08:00",
