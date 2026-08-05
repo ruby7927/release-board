@@ -186,6 +186,14 @@
         <label for="fVenue">場地</label>
         <select id="fVenue"><option value="">全部</option></select>
       </div>
+      <div class="f">
+        <label for="fStatus">狀態</label>
+        <select id="fStatus">
+          <option value="">全部</option>
+          <option value="soon">即將更版</option>
+          <option value="done">已更版</option>
+        </select>
+      </div>
       <button class="btn-ghost" id="clearBtn">清除條件</button>
     </div>
   </section>
@@ -282,10 +290,14 @@ let sb = null, rows = [], session = null, editingId = null;
 /* ---------- 日期工具（一律當作本地時間，不做時區轉換） ---------- */
 const pad = n => String(n).padStart(2,"0");
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const nowKey   = () => { const d = new Date(); return `${todayStr()}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 function splitTs(ts){                       // "2026-08-11T08:00:00" → ["2026-08-11","08:00"]
   const s = String(ts || "").replace(" ","T");
   return [s.slice(0,10), s.slice(11,16) || "00:00"];
 }
+// 可直接比大小的鍵值 "2026-08-11T08:00"（含時分，同一天也分得出上線前後）
+const tsKey  = r => splitTs(r.release_at).join("T");
+const isSoon = (r, now) => tsKey(r) > now;
 function fmtWhen(ts){
   const [d,t] = splitTs(ts);
   const [y,m,dd] = d.split("-").map(Number);
@@ -359,12 +371,12 @@ function passFilter(r){
 }
 
 function render(){
-  const list = rows.filter(passFilter);
-  const today = todayStr();
-  const soon = list.filter(r => splitTs(r.release_at)[0] >= today)
-                   .sort((a,b) => String(a.release_at).localeCompare(String(b.release_at)));   // 最近的先上
-  const done = list.filter(r => splitTs(r.release_at)[0] <  today)
-                   .sort((a,b) => String(b.release_at).localeCompare(String(a.release_at)));   // 最新的先看
+  const want = $("fStatus").value;                 // "" | "soon" | "done"
+  const now  = nowKey();
+  const list = rows.filter(passFilter)
+                   .filter(r => !want || (want === "soon") === isSoon(r, now));
+  const soon = list.filter(r =>  isSoon(r, now)).sort((a,b) => tsKey(a).localeCompare(tsKey(b)));  // 最近的先上
+  const done = list.filter(r => !isSoon(r, now)).sort((a,b) => tsKey(b).localeCompare(tsKey(a)));  // 最新的先看
 
   $("count").textContent = `共 ${list.length} 筆`;
   $("hint").textContent  = (list.length !== rows.length) ? `（全部 ${rows.length} 筆，已套用查詢條件）` : "";
@@ -451,9 +463,9 @@ function showMsg(id, text){
 }
 
 /* ---------- 事件 ---------- */
-["fFrom","fTo","fCat","fVenue"].forEach(id => $(id).addEventListener("change", render));
+["fFrom","fTo","fCat","fVenue","fStatus"].forEach(id => $(id).addEventListener("change", render));
 $("clearBtn").addEventListener("click", () => {
-  $("fFrom").value = ""; $("fTo").value = ""; $("fCat").value = ""; $("fVenue").value = "";
+  ["fFrom","fTo","fCat","fVenue","fStatus"].forEach(id => { $(id).value = ""; });
   render();
 });
 
