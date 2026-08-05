@@ -22,6 +22,7 @@
     --done:#12803B; --done-soft:#E7F8EE; --done-line:#BCE9CD; --done-bar:#22C55E;
     --venue:#4E58AD; --venue-soft:#EEF0FB;
     --soon-bar:#E0A03A;
+    --cat-ink:#B45A0C; --cat-line:#EFA24C;
     --grp:#975E0D; --grp-soft:#FDEBD6;
     --danger:#B3261E; --danger-soft:#FBECEA;
     --shadow:0 1px 2px rgba(26,33,30,.05);
@@ -88,8 +89,9 @@
   .card:hover{border-color:var(--line-strong);box-shadow:0 2px 10px rgba(26,33,30,.09)}
   .c-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
   /* 標籤一律做成無框膠囊：淺色底 + 同色系深字 */
-  .c-cat{font-weight:700;font-size:14px;padding:4px 13px;border-radius:999px;
-    color:var(--venue);background:var(--venue-soft)}
+  /* 系統分類：白底 + 橘框 + 橘字（同 Filter Search 按鈕風格） */
+  .c-cat{font-weight:600;font-size:14px;padding:4px 13px;border-radius:7px;
+    color:var(--cat-ink);background:var(--surface);border:1px solid var(--cat-line)}
   .chip{font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:4px 10px;border-radius:999px;
     background:var(--venue-soft);color:var(--venue);font-weight:600}
   .pill{font-size:11.5px;letter-spacing:.06em;padding:4px 11px;border-radius:999px;margin-left:auto;font-weight:600}
