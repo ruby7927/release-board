@@ -144,8 +144,9 @@
   .fld label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px}
   .fld label .req{color:var(--danger);margin-left:2px}
   .fld .tip{font-size:11.5px;color:var(--ink-faint);margin-top:4px;line-height:1.5}
-  .two{display:flex;gap:10px}
-  .two > *{flex:1}
+  .two{display:flex;gap:10px;flex-wrap:wrap}
+  .two > *{flex:1 1 190px}
+  .fld.half{max-width:calc(50% - 5px)}
   .chips{display:flex;gap:8px;flex-wrap:wrap}
   .chips label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);border-radius:var(--r);padding:6px 11px;cursor:pointer;font-family:var(--mono);font-size:13px;letter-spacing:.06em;user-select:none}
   .chips label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
@@ -272,16 +273,9 @@
   <form method="dialog" id="noteForm">
     <div class="d-head"><h3 id="fmTitle">新增公告</h3><button type="button" class="x" data-close="formDlg" aria-label="關閉">×</button></div>
     <div class="d-body">
-      <div class="two">
-        <div class="fld">
-          <label for="inCreated">建立日期<span class="req">*</span></label>
-          <input type="date" id="inCreated" required>
-        </div>
-        <div class="fld">
-          <label for="inCat">系統分類<span class="req">*</span></label>
-          <input type="text" id="inCat" list="catList" placeholder="例：荷官排班系統" required>
-          <datalist id="catList"></datalist>
-        </div>
+      <div class="fld half">
+        <label for="inCreated">建立日期<span class="req">*</span></label>
+        <input type="date" id="inCreated" required>
       </div>
 
       <div class="fld">
@@ -293,10 +287,17 @@
         <div class="tip">時間預設 08:00，如有特殊安排再調整。</div>
       </div>
 
-      <div class="fld">
-        <label>場地<span class="req">*</span></label>
-        <div class="chips" id="inVenues"></div>
-        <div class="tip">可複選。全部場地都受影響就全部勾起來，留空會在場地篩選時被漏掉。</div>
+      <div class="two">
+        <div class="fld">
+          <label for="inCat">系統分類<span class="req">*</span></label>
+          <input type="text" id="inCat" list="catList" placeholder="例：荷官排班系統" required>
+          <datalist id="catList"></datalist>
+        </div>
+        <div class="fld">
+          <label>場地<span class="req">*</span></label>
+          <div class="chips" id="inVenues"></div>
+          <div class="tip">可複選，至少勾一個。</div>
+        </div>
       </div>
 
       <div class="fld">
