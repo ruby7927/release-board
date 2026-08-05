@@ -20,7 +20,7 @@
     /* 文字色都取到與各自底色對比 >= 4.5，現場在明亮環境也看得清楚 */
     --soon:#97600D; --soon-soft:#FDF1DA; --soon-line:#E8CFA1;
     --done:#12803B; --done-soft:#E7F8EE; --done-line:#BCE9CD; --done-bar:#22C55E;
-    --venue:#4E58AD; --venue-soft:#EEF0FB;
+    --venue:#FFAF60; --venue-soft:#FFF4C1;
     --soon-bar:#E0A03A;
     --cat-ink:#B45A0C; --cat-line:#EFA24C;
     --grp:#975E0D; --grp-soft:#FDEBD6;
@@ -104,6 +104,9 @@
   .c-body{margin:0;padding-left:18px}
   .c-body li{margin:3px 0}
   .c-plain{margin:0;white-space:pre-wrap}
+  .c-rich{line-height:1.8}
+  .c-rich div{margin:2px 0}
+  .c-rich u{text-underline-offset:2px}
   .c-link{display:inline-block;margin-top:9px;font-size:13.5px;color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
   .c-link:hover{border-bottom-color:var(--accent)}
   .c-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:12px;padding-top:9px}
@@ -133,6 +136,22 @@
   .chips label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
   .chips input{width:auto;margin:0;accent-color:var(--accent)}
   textarea{min-height:120px;resize:vertical;line-height:1.7}
+
+  /* ---------------- 更版內容編輯器 ---------------- */
+  .editor{border:1px solid var(--line-strong);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+  .editor:focus-within{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  .etool{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:6px 8px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+  .etool button{padding:3px 8px;min-width:28px;font-size:13px;line-height:1.5;border:1px solid transparent;
+    background:transparent;color:var(--ink-soft);border-radius:var(--r)}
+  .etool button:hover{background:var(--surface);border-color:var(--line-strong);color:var(--ink)}
+  .etool button.hl,.etool button.fc{width:22px;height:22px;min-width:0;padding:0;border:1px solid var(--line-strong);background:var(--sw)}
+  .etool button.fc{position:relative;background:var(--surface)}
+  .etool button.fc::after{content:"A";position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--sw)}
+  .etool button.hl:hover,.etool button.fc:hover{outline:2px solid var(--accent);outline-offset:1px}
+  .esep{width:1px;height:18px;background:var(--line-strong);margin:0 3px}
+  .ebody{min-height:130px;max-height:300px;overflow-y:auto;padding:10px 12px;font-size:14px;line-height:1.8;outline:none}
+  .ebody:empty::before{content:attr(data-ph);color:var(--ink-faint)}
+  .ebody u{text-underline-offset:2px}
   .msg{font-size:13px;padding:9px 11px;border-radius:var(--r);margin-top:12px}
   .msg.err{background:var(--danger-soft);color:var(--danger)}
 
@@ -258,8 +277,26 @@
 
       <div class="fld">
         <label for="inContent">更版內容<span class="req">*</span></label>
-        <textarea id="inContent" placeholder="一項一行，例：&#10;排班表新增「代班」標記，代班人員以橘色顯示&#10;修正跨月查詢時筆數不完整的問題" required></textarea>
-        <div class="tip">寫給沒參與需求討論的現場同仁看：講畫面或流程哪裡不一樣，避免程式術語與票號。</div>
+        <div class="editor">
+          <div class="etool" role="toolbar" aria-label="文字格式">
+            <button type="button" data-cmd="bold" title="粗體"><b>B</b></button>
+            <button type="button" data-cmd="underline" title="底線"><u>U</u></button>
+            <span class="esep"></span>
+            <button type="button" class="hl" data-hl="#FFF4C1" style="--sw:#FFF4C1" title="螢光筆 黃"></button>
+            <button type="button" class="hl" data-hl="#D9F2D0" style="--sw:#D9F2D0" title="螢光筆 綠"></button>
+            <button type="button" class="hl" data-hl="#D8E8FB" style="--sw:#D8E8FB" title="螢光筆 藍"></button>
+            <button type="button" class="hl" data-hl="#FBD9E1" style="--sw:#FBD9E1" title="螢光筆 粉"></button>
+            <span class="esep"></span>
+            <button type="button" class="fc" data-fc="#C0392B" style="--sw:#C0392B" title="紅字"></button>
+            <button type="button" class="fc" data-fc="#1F6FB2" style="--sw:#1F6FB2" title="藍字"></button>
+            <span class="esep"></span>
+            <button type="button" data-cmd="removeFormat" title="清除選取範圍的格式">清除格式</button>
+          </div>
+          <div id="inContent" class="ebody" contenteditable="true" role="textbox" aria-multiline="true"
+               data-ph="一項一行，例：排班表新增「代班」標記，代班人員以橘色顯示"></div>
+        </div>
+        <div class="tip">寫給沒參與需求討論的現場同仁看：講畫面或流程哪裡不一樣，避免程式術語與票號。<br>
+          選取文字後按上方按鈕可套用粗體、底線、螢光筆與文字顏色；從別處貼上的內容會自動轉成純文字。</div>
       </div>
 
       <div class="fld">
@@ -401,12 +438,37 @@ function render(){
   $("list").innerHTML = html;
 }
 
+/* ---------- 更版內容的格式（粗體／底線／螢光筆／文字顏色） ----------
+   只允許少數標籤與兩個樣式屬性，其餘一律拆掉；即使資料庫被塞入奇怪內容也不會被執行。 */
+const OK_TAG = {B:1,STRONG:1,U:1,I:1,EM:1,MARK:1,SPAN:1,DIV:1,P:1,BR:1,UL:1,OL:1,LI:1,FONT:1};
+const isRich = s => /<(b|strong|u|i|em|mark|span|div|p|br|ul|ol|li|font)\b/i.test(String(s||""));
+
+function sanitize(html){
+  const root = new DOMParser().parseFromString("<div>" + html + "</div>", "text/html").body.firstElementChild;
+  for(let i = 0; i < 20; i++){                                  // 反覆拆掉不允許的標籤，保留其中文字
+    const bad = [...root.querySelectorAll("*")].filter(el => !OK_TAG[el.tagName]);
+    if(!bad.length) break;
+    bad.forEach(el => el.replaceWith(...el.childNodes));
+  }
+  root.querySelectorAll("*").forEach(el => {                    // 屬性全清，只留背景色與文字色
+    const bg = el.style.backgroundColor, fg = el.style.color;
+    [...el.attributes].forEach(a => el.removeAttribute(a.name));
+    const keep = [];
+    if(bg) keep.push("background-color:" + bg);
+    if(fg) keep.push("color:" + fg);
+    if(keep.length) el.setAttribute("style", keep.join(";"));
+  });
+  return root.innerHTML;
+}
+
 function card(r, isSoon){
   const venues = (r.venues||[]).map(v=>`<span class="chip">${esc(String(v).toUpperCase())}</span>`).join("");
   const lines  = String(r.content||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  const body   = lines.length > 1
-      ? `<ul class="c-body">${lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`
-      : `<p class="c-plain">${esc(lines[0]||"")}</p>`;
+  const body   = isRich(r.content)
+      ? `<div class="c-rich">${sanitize(r.content)}</div>`
+      : lines.length > 1
+        ? `<ul class="c-body">${lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`
+        : `<p class="c-plain">${esc(lines[0]||"")}</p>`;
   const link   = r.link_url ? `<a class="c-link" href="${esc(r.link_url)}" target="_blank" rel="noopener">相關連結 →</a>` : "";
   const acts   = session ? `<span class="acts">
         <button type="button" class="btn-ghost btn-sm" data-edit="${esc(r.id)}">編輯</button>
@@ -432,8 +494,12 @@ function openForm(rec){
   $("inDate").value    = d;
   $("inTime").value    = t || DEF_T;
   $("inCat").value     = rec ? (rec.category || "") : "";
-  $("inContent").value = rec ? (rec.content  || "") : "";
   $("inLink").value    = rec ? (rec.link_url || "") : "";
+  const c = rec ? (rec.content || "") : "";
+  // 舊的純文字紀錄：換行轉成 <div>，才能沿用同一個編輯器
+  $("inContent").innerHTML = !c ? ""
+      : isRich(c) ? sanitize(c)
+      : c.split(/\r?\n/).map(l => `<div>${esc(l)}</div>`).join("");
   const picked = (rec?.venues || []).map(v=>String(v).toUpperCase());
   document.querySelectorAll("#inVenues input").forEach(c => { c.checked = picked.includes(c.value.toUpperCase()); });
   $("formDlg").showModal();
@@ -442,12 +508,13 @@ function openForm(rec){
 async function saveForm(){
   const venues = [...document.querySelectorAll("#inVenues input:checked")].map(c=>c.value);
   if(!venues.length){ return showMsg("fmMsg", "請至少勾選一個場地。"); }
+  if(!$("inContent").innerText.trim()){ return showMsg("fmMsg", "請填寫更版內容。"); }
   const payload = {
     created_date: $("inCreated").value,
     release_at:   `${$("inDate").value}T${$("inTime").value}:00`,
     category:     $("inCat").value.trim(),
     venues,
-    content:      $("inContent").value.trim(),
+    content:      sanitize($("inContent").innerHTML),
     link_url:     $("inLink").value.trim() || null
   };
   $("fmSubmit").disabled = true;
@@ -492,6 +559,26 @@ const statusSig = now => rows.map(r => isSoon(r, now) ? "1" : "0").join("");
 function tick(){ if(rows.length && statusSig(nowKey()) !== lastSig) render(); }
 setInterval(tick, 60000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) tick(); });
+
+/* 編輯器工具列：mousedown 先擋掉預設行為，才不會在按按鈕時失去選取範圍 */
+document.querySelector(".etool").addEventListener("mousedown", e => {
+  if(e.target.closest("button")) e.preventDefault();
+});
+document.querySelector(".etool").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if(!b) return;
+  $("inContent").focus();
+  document.execCommand("styleWithCSS", false, true);
+  if(b.dataset.cmd)     document.execCommand(b.dataset.cmd, false, null);
+  else if(b.dataset.hl) document.execCommand("hiliteColor", false, b.dataset.hl);
+  else if(b.dataset.fc) document.execCommand("foreColor",   false, b.dataset.fc);
+});
+// 從 Word、網頁貼上時只取純文字，避免帶進整堆外部樣式
+$("inContent").addEventListener("paste", e => {
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+  document.execCommand("insertText", false, text);
+});
 
 $("newBtn").addEventListener("click", () => openForm(null));
 $("noteForm").addEventListener("submit", e => { e.preventDefault(); saveForm(); });
