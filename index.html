@@ -17,8 +17,11 @@
     --bar:#FBE1C6; --bar-ink:#3B2A15; --bar-sub:#8A6942; --bar-line:#D9B489; --bar-edge:#E09A4B;
     --accent:#C2600F; --accent-d:#9C4C08; --accent-soft:#FCEEDD;
     --tint:#FDF8F2; --tint-line:#EFE3D4;
-    --soon:#B0700F; --soon-soft:#FDF1DA; --soon-line:#E8CFA1;
-    --done:#4A6B62; --done-soft:#EEF3F1; --done-line:#D3E0DB;
+    /* 文字色都取到與各自底色對比 >= 4.5，現場在明亮環境也看得清楚 */
+    --soon:#97600D; --soon-soft:#FDF1DA; --soon-line:#E8CFA1;
+    --done:#12803B; --done-soft:#E7F8EE; --done-line:#BCE9CD; --done-bar:#22C55E;
+    --venue:#4E58AD; --venue-soft:#EEF0FB;
+    --grp:#975E0D; --grp-soft:#FDEBD6;
     --danger:#B3261E; --danger-soft:#FBECEA;
     --shadow:0 1px 2px rgba(26,33,30,.05);
     --mono:ui-monospace,"Cascadia Mono",Consolas,"SFMono-Regular",Menlo,monospace;
@@ -72,12 +75,8 @@
   .group{display:flex;align-items:center;gap:12px;margin:26px 0 12px}
   .group:first-of-type{margin-top:4px}
   .group h2{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.14em;white-space:nowrap;
-    padding:4px 12px;border-radius:20px;border:1px solid}
-  .group .rule{flex:1;height:1px}
-  .group.soon h2{color:var(--soon);background:var(--soon-soft);border-color:var(--soon-line)}
-  .group.soon .rule{background:linear-gradient(90deg,var(--soon-line),transparent)}
-  .group.done h2{color:var(--done);background:var(--done-soft);border-color:var(--done-line)}
-  .group.done .rule{background:linear-gradient(90deg,var(--done-line),transparent)}
+    padding:5px 14px;border-radius:999px;color:var(--grp);background:var(--grp-soft)}
+  .group .rule{flex:1;height:1px;background:var(--line)}
 
   /* ---------------- 公告卡 ---------------- */
   .cards{display:flex;flex-direction:column;gap:12px}
@@ -86,15 +85,16 @@
     border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;transition:box-shadow .15s,border-color .15s}
   .card:hover{border-color:var(--line-strong);border-left-color:hsl(var(--ch),48%,44%);box-shadow:0 2px 10px rgba(26,33,30,.09)}
   .c-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-  .c-cat{font-weight:700;font-size:15.5px;color:hsl(var(--ch),55%,29%);display:inline-flex;align-items:center;gap:7px}
-  .c-cat::before{content:"";width:9px;height:9px;border-radius:50%;background:hsl(var(--ch),45%,48%);flex:none}
-  .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 6px;border-radius:2px;
-    background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
-  .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 8px;border-radius:20px;margin-left:auto;font-weight:600}
-  .pill.soon{background:var(--soon-soft);color:var(--soon);border:1px solid var(--soon-line)}
-  .pill.done{background:var(--done-soft);color:var(--done);border:1px solid var(--done-line)}
+  /* 標籤一律做成無框膠囊：淺色底 + 同色系深字 */
+  .c-cat{font-weight:700;font-size:14px;padding:4px 13px;border-radius:999px;
+    color:hsl(var(--ch),52%,34%);background:hsl(var(--ch),72%,95%)}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:4px 10px;border-radius:999px;
+    background:var(--venue-soft);color:var(--venue);font-weight:600}
+  .pill{font-size:11.5px;letter-spacing:.06em;padding:4px 11px;border-radius:999px;margin-left:auto;font-weight:600}
+  .pill.soon{background:var(--soon-soft);color:var(--soon)}
+  .pill.done{background:var(--done-soft);color:var(--done)}
   .c-when{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;background:var(--done-soft);
-    border:1px solid var(--done-line);border-left:3px solid var(--done);border-radius:var(--r);
+    border:1px solid var(--done-line);border-left:3px solid var(--done-bar);border-radius:var(--r);
     padding:8px 12px;margin-bottom:12px}
   .c-when .lab{font-size:11.5px;letter-spacing:.14em;color:var(--done);white-space:nowrap}
   .c-when b{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--ink);
