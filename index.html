@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>更版公告 — 每週系統更版看板</title>
 <meta name="description" content="每週系統更版公告，現場人員免登入查詢。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
@@ -22,18 +23,6 @@
     --sans:"Microsoft JhengHei UI","Microsoft JhengHei","PingFang TC","Noto Sans TC","Segoe UI",system-ui,sans-serif;
     --r:3px;
   }
-  @media (prefers-color-scheme:dark){
-    :root{
-      --paper:#0F1412; --surface:#171E1B; --surface-2:#1D2622;
-      --ink:#E8EDE9; --ink-soft:#A5B2AC; --ink-faint:#7C8883;
-      --line:#28322E; --line-strong:#38443E;
-      --bar:#3B2A17; --bar-ink:#F7E6CE; --bar-sub:#BC9C74; --bar-edge:#B9803C; --bar-line:#5C452A;
-      --accent:#59C3A4; --accent-d:#7BD5BA; --accent-soft:#15302A;
-      --soon:#DBA850; --soon-soft:#2A2317; --soon-line:#4B3D21;
-      --danger:#E8796F; --danger-soft:#2E1917;
-      --shadow:0 1px 2px rgba(0,0,0,.4);
-    }
-  }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.7}
@@ -44,7 +33,6 @@
 
   .btn-primary{background:var(--accent);color:#fff;font-weight:600}
   .btn-primary:hover{background:var(--accent-d)}
-  @media (prefers-color-scheme:dark){.btn-primary{color:#0A1512}}
   .btn-ghost{background:transparent;border-color:var(--line-strong);color:var(--ink-soft)}
   .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
   .btn-sm{padding:4px 10px;font-size:12.5px}
@@ -60,7 +48,6 @@
   .hwrap .who{font-family:var(--mono);font-size:11.5px;color:var(--bar-sub);letter-spacing:.04em}
   .hwrap .btn-ghost{border-color:var(--bar-line);color:var(--bar-ink)}
   .hwrap .btn-ghost:hover{border-color:var(--bar-ink);background:rgba(255,255,255,.35)}
-  @media (prefers-color-scheme:dark){.hwrap .btn-ghost:hover{background:rgba(255,255,255,.08)}}
 
   main{max-width:1000px;margin:0 auto;padding:22px 20px 60px}
 
