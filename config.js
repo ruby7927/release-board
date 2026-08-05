@@ -17,5 +17,14 @@ window.APP_CONFIG = {
   defaultReleaseTime: "08:00",
 
   // 系統分類建議清單；表單仍可自行輸入新的分類
-  categoryHints: ["荷官排班系統", "請假系統", "採購系統", "Incident Reporting System"]
+  categoryHints: ["荷官排班系統", "請假系統", "採購系統", "Incident Reporting System"],
+
+  // 操作手冊：各系統的 Google 雲端資料夾連結，顯示在清單上方
+  // 新增或修改直接改這裡即可；url 留空會顯示「連結待補」且不可點
+  // 分享設定記得設為「知道連結的任何人」，現場才開得起來
+  manuals: [
+    { name: "荷官排班系統",              url: "" },
+    { name: "Incident Reporting System", url: "" },
+    { name: "請假系統",                  url: "" }
+  ]
 };
