@@ -290,6 +290,11 @@
             <button type="button" class="fc" data-fc="#C0392B" style="--sw:#C0392B" title="紅字"></button>
             <button type="button" class="fc" data-fc="#1F6FB2" style="--sw:#1F6FB2" title="藍字"></button>
             <span class="esep"></span>
+            <button type="button" data-size="2" title="小字">小</button>
+            <button type="button" data-size="3" title="一般字級">一般</button>
+            <button type="button" data-size="5" title="大字">大</button>
+            <button type="button" data-size="6" title="特大字">特大</button>
+            <span class="esep"></span>
             <button type="button" data-cmd="removeFormat" title="清除選取範圍的格式">清除格式</button>
           </div>
           <div id="inContent" class="ebody" contenteditable="true" role="textbox" aria-multiline="true"
@@ -443,6 +448,9 @@ function render(){
 const OK_TAG = {B:1,STRONG:1,U:1,I:1,EM:1,MARK:1,SPAN:1,DIV:1,P:1,BR:1,UL:1,OL:1,LI:1,FONT:1};
 const isRich = s => /<(b|strong|u|i|em|mark|span|div|p|br|ul|ol|li|font)\b/i.test(String(s||""));
 
+const FS_BY_NUM = {1:"x-small",2:"small",3:"medium",4:"large",5:"x-large",6:"xx-large",7:"xxx-large"};
+const OK_FS = new Set(Object.values(FS_BY_NUM));
+
 function sanitize(html){
   const root = new DOMParser().parseFromString("<div>" + html + "</div>", "text/html").body.firstElementChild;
   for(let i = 0; i < 20; i++){                                  // 反覆拆掉不允許的標籤，保留其中文字
@@ -450,12 +458,18 @@ function sanitize(html){
     if(!bad.length) break;
     bad.forEach(el => el.replaceWith(...el.childNodes));
   }
-  root.querySelectorAll("*").forEach(el => {                    // 屬性全清，只留背景色與文字色
-    const bg = el.style.backgroundColor, fg = el.style.color;
+  // 某些瀏覽器的字級會存成 <font size="5">，先轉成 CSS 才不會在清屬性時丟失
+  root.querySelectorAll("font[size]").forEach(el => {
+    const fs = FS_BY_NUM[el.getAttribute("size")];
+    if(fs) el.style.fontSize = fs;
+  });
+  root.querySelectorAll("*").forEach(el => {                    // 屬性全清，只留背景色、文字色與字級
+    const bg = el.style.backgroundColor, fg = el.style.color, fs = el.style.fontSize;
     [...el.attributes].forEach(a => el.removeAttribute(a.name));
     const keep = [];
     if(bg) keep.push("background-color:" + bg);
     if(fg) keep.push("color:" + fg);
+    if(fs && OK_FS.has(fs)) keep.push("font-size:" + fs);       // 只收白名單字級，避免塞進誇張的尺寸
     if(keep.length) el.setAttribute("style", keep.join(";"));
   });
   return root.innerHTML;
@@ -569,9 +583,10 @@ document.querySelector(".etool").addEventListener("click", e => {
   if(!b) return;
   $("inContent").focus();
   document.execCommand("styleWithCSS", false, true);
-  if(b.dataset.cmd)     document.execCommand(b.dataset.cmd, false, null);
-  else if(b.dataset.hl) document.execCommand("hiliteColor", false, b.dataset.hl);
-  else if(b.dataset.fc) document.execCommand("foreColor",   false, b.dataset.fc);
+  if(b.dataset.cmd)       document.execCommand(b.dataset.cmd, false, null);
+  else if(b.dataset.hl)   document.execCommand("hiliteColor", false, b.dataset.hl);
+  else if(b.dataset.fc)   document.execCommand("foreColor",   false, b.dataset.fc);
+  else if(b.dataset.size) document.execCommand("fontSize",    false, b.dataset.size);
 });
 // 從 Word、網頁貼上時只取純文字，避免帶進整堆外部樣式
 $("inContent").addEventListener("paste", e => {
