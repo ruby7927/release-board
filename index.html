@@ -21,6 +21,7 @@
     --soon:#97600D; --soon-soft:#FDF1DA; --soon-line:#E8CFA1;
     --done:#12803B; --done-soft:#E7F8EE; --done-line:#BCE9CD; --done-bar:#22C55E;
     --venue:#4E58AD; --venue-soft:#EEF0FB;
+    --soon-bar:#E0A03A;
     --grp:#975E0D; --grp-soft:#FDEBD6;
     --danger:#B3261E; --danger-soft:#FBECEA;
     --shadow:0 1px 2px rgba(26,33,30,.05);
@@ -80,14 +81,15 @@
 
   /* ---------------- 公告卡 ---------------- */
   .cards{display:flex;flex-direction:column;gap:12px}
-  /* --ch = 系統分類的色相，由 JS 依分類名稱決定，同一個系統永遠同一色 */
-  .card{background:var(--surface);border:1px solid var(--line);border-left:4px solid hsl(var(--ch),42%,52%);
+  /* 卡片左側色條只表示狀態：即將更版＝琥珀、已更版＝綠 */
+  .card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--done-bar);
     border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;transition:box-shadow .15s,border-color .15s}
-  .card:hover{border-color:var(--line-strong);border-left-color:hsl(var(--ch),48%,44%);box-shadow:0 2px 10px rgba(26,33,30,.09)}
+  .card.is-soon{border-left-color:var(--soon-bar)}
+  .card:hover{border-color:var(--line-strong);box-shadow:0 2px 10px rgba(26,33,30,.09)}
   .c-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
   /* 標籤一律做成無框膠囊：淺色底 + 同色系深字 */
   .c-cat{font-weight:700;font-size:14px;padding:4px 13px;border-radius:999px;
-    color:hsl(var(--ch),52%,34%);background:hsl(var(--ch),72%,95%)}
+    color:var(--venue);background:var(--venue-soft)}
   .chip{font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:4px 10px;border-radius:999px;
     background:var(--venue-soft);color:var(--venue);font-weight:600}
   .pill{font-size:11.5px;letter-spacing:.06em;padding:4px 11px;border-radius:999px;margin-left:auto;font-weight:600}
@@ -344,7 +346,6 @@ async function load(){
     return;
   }
   rows = data || [];
-  assignHues();
   syncCategoryOptions();
   render();
 }
@@ -403,28 +404,6 @@ function render(){
   $("list").innerHTML = html;
 }
 
-/* 系統分類自動配色：分類名稱決定色相，新增分類不必改程式。
-   色盤刻意避開橘黃區間（頁首與「即將更版」已佔用），才不會跟狀態顏色混淆。
-   同色時往後取下一個空位，確保畫面上同時存在的分類彼此不同色。 */
-const CAT_HUES = [200, 225, 260, 290, 320, 345, 100, 135, 165, 185];
-const hashOf = s => { let n = 0; for(const ch of String(s||"")) n = (n*31 + ch.codePointAt(0)) >>> 0; return n; };
-let hueMap = new Map();
-
-function assignHues(){
-  hueMap = new Map();
-  const used = new Set();
-  const cats = [...new Set(rows.map(r=>r.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
-  for(const c of cats){
-    const start = hashOf(c) % CAT_HUES.length;
-    for(let k = 0; k < CAT_HUES.length; k++){
-      const h = CAT_HUES[(start + k) % CAT_HUES.length];
-      if(!used.has(h)){ used.add(h); hueMap.set(c, h); break; }
-    }
-    if(!hueMap.has(c)) hueMap.set(c, CAT_HUES[start]);   // 分類數超過色數才會重複
-  }
-}
-const catHue = name => hueMap.get(name) ?? CAT_HUES[hashOf(name) % CAT_HUES.length];
-
 function card(r, isSoon){
   const venues = (r.venues||[]).map(v=>`<span class="chip">${esc(String(v).toUpperCase())}</span>`).join("");
   const lines  = String(r.content||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
@@ -435,7 +414,7 @@ function card(r, isSoon){
   const acts   = session ? `<span class="acts">
         <button type="button" class="btn-ghost btn-sm" data-edit="${esc(r.id)}">編輯</button>
         <button type="button" class="btn-danger btn-sm" data-del="${esc(r.id)}">刪除</button></span>` : "";
-  return `<article class="card ${isSoon?"is-soon":"is-done"}" style="--ch:${catHue(r.category)}">
+  return `<article class="card ${isSoon?"is-soon":"is-done"}">
     <div class="c-top">
       <span class="c-cat">${esc(r.category||"未分類")}</span>${venues}
       <span class="pill ${isSoon?"soon":"done"}">${isSoon?"即將更版":"已更版"}</span>
