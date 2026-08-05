@@ -60,7 +60,7 @@
 
   /* ---------------- 篩選列 ---------------- */
   /* ---------------- 操作手冊 ---------------- */
-  .manuals{background:var(--tint);border:1px solid var(--tint-line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:14px}
+  .manuals{margin:0 0 20px;padding:0 2px}
   .mlist{display:flex;gap:10px;flex-wrap:wrap}
   .mitem{display:inline-flex;align-items:center;gap:9px;padding:9px 14px;border:1px solid var(--line-strong);
     border-radius:var(--r);background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px;font-weight:600;transition:.14s}
@@ -201,11 +201,6 @@
     請開啟 <code>config.js</code>，填入 Supabase 的 Project URL 與 anon key，並在 SQL Editor 執行 <code>schema.sql</code>。
   </div>
 
-  <section class="manuals hidden" id="manuals">
-    <div class="flabel">操作手冊</div>
-    <div class="mlist" id="mlist"></div>
-  </section>
-
   <section class="filters">
     <div class="flabel">查詢條件</div>
     <div class="frow">
@@ -235,6 +230,11 @@
       </div>
       <button class="btn-ghost" id="clearBtn">清除條件</button>
     </div>
+  </section>
+
+  <section class="manuals hidden" id="manuals">
+    <div class="flabel">操作手冊</div>
+    <div class="mlist" id="mlist"></div>
   </section>
 
   <div class="summary">
