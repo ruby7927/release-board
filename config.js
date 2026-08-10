@@ -19,12 +19,20 @@ window.APP_CONFIG = {
   // 系統分類建議清單；表單仍可自行輸入新的分類
   categoryHints: ["荷官排班系統", "請假系統", "採購系統", "Incident Reporting System"],
 
-  // 操作手冊：各系統的 Google 雲端資料夾連結，顯示在清單上方
-  // 新增或修改直接改這裡即可；url 留空會顯示「連結待補」且不可點
+  // ---- 側邊分頁 2. 操作手冊 ----
+  // 每一筆會變成一個分頁；url 是該系統的 Google 雲端資料夾（可留空）
   // 分享設定記得設為「知道連結的任何人」，現場才開得起來
   manuals: [
     { name: "荷官排班系統",              url: "https://drive.google.com/drive/folders/1UAStUu8eOVIhpdZVxWVBhAz7qwbO-m1J?usp=sharing" },
     { name: "Incident Reporting System", url: "https://drive.google.com/drive/folders/1nH5zuOBlMbiBGJzKmWs_AdNDzaT00IGL?usp=sharing" },
     { name: "請假系統",                  url: "https://drive.google.com/drive/folders/1PMcD-UastGpJHLeyLjMS9rCzRPhdgDY8?usp=sharing" }
+  ],
+
+  // ---- 側邊分頁 3. 網址連結 ----
+  // 每個系統一個分頁，登入後可自行新增「網址名稱 + 場地 + 網址」
+  links: [
+    { name: "荷官排班系統" },
+    { name: "Incident Reporting System" },
+    { name: "請假系統" }
   ]
 };

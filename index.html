@@ -246,8 +246,7 @@
 <aside class="side">
   <nav class="snav" aria-label="頁面導覽">
     <a class="snav-item" href="#/" data-nav="home"><b>1.</b>更版訊息（首頁）</a>
-    <div class="snav-sec"><b>2.</b>操作手冊</div>
-    <div id="navManuals"></div>
+    <div id="navSections"></div>
   </nav>
 </aside>
 
@@ -414,15 +413,15 @@
     <div class="d-head"><h3 id="flTitle">新增檔案</h3><button type="button" class="x" data-close="fileDlg" aria-label="關閉">×</button></div>
     <div class="d-body">
       <div class="fld">
-        <label for="inFName">檔案名稱<span class="req">*</span></label>
+        <label for="inFName"><span id="lbFName">檔案名稱</span><span class="req">*</span></label>
         <input type="text" id="inFName" placeholder="例：障礙表單系統操作手冊" required>
       </div>
       <div class="fld">
-        <label for="inFUrl">連結<span class="req">*</span></label>
+        <label for="inFUrl"><span id="lbFUrl">連結</span><span class="req">*</span></label>
         <input type="url" id="inFUrl" placeholder="https://docs.google.com/…" required>
         <div class="tip">分享設定要設為「知道連結的任何人」，現場未登入才開得起來。</div>
       </div>
-      <div class="two">
+      <div class="two" id="rowFileOnly">
         <div class="fld">
           <label for="inFType">類型<span class="req">*</span></label>
           <select id="inFType">
@@ -434,6 +433,11 @@
           <label for="inFOwner">擁有者</label>
           <input type="text" id="inFOwner" placeholder="例：ruby.hsieh">
         </div>
+      </div>
+      <div class="fld hidden" id="rowLinkOnly">
+        <label>場地<span class="req">*</span></label>
+        <div class="chips" id="inFVenues"></div>
+        <div class="tip">可複選，至少勾一個。</div>
       </div>
       <div class="fld">
         <label>最後修改<span class="req">*</span></label>
@@ -535,25 +539,36 @@ function syncCategoryOptions(){
   $("catList").innerHTML = hints.map(c=>`<option value="${esc(c)}">`).join("");
 }
 
-/* ---------- 側邊分頁 ---------- */
-const MANUALS = (CFG.manuals || []).filter(m => m && m.name);
+/* ---------- 側邊分頁 ----------
+   兩個分區共用 manual_files，靠 section 欄位區分；欄位與表單也依分區不同。 */
+const listOf = a => (a || []).filter(x => x && x.name);
+const SECTIONS = [
+  { key:"manual", no:2, title:"操作手冊", kind:"file", items: listOf(CFG.manuals) },
+  { key:"link",   no:3, title:"網址連結", kind:"link", items: listOf(CFG.links)   }
+].filter(s => s.items.length);
+const secByKey = k => SECTIONS.find(s => s.key === k);
+
 const FOLDER_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`;
+const linkTo = (sec, name) => `#/d/${sec.key}/${encodeURIComponent(name)}`;
 
 function buildNav(){
-  $("navManuals").innerHTML = MANUALS.map((m, i) =>
-    `<a class="snav-item snav-sub" href="#/manual/${encodeURIComponent(m.name)}"><b>2.${i+1}</b>${esc(m.name)}</a>`
+  $("navSections").innerHTML = SECTIONS.map(sec =>
+    `<div class="snav-sec"><b>${sec.no}.</b>${esc(sec.title)}</div>` +
+    sec.items.map((m, i) =>
+      `<a class="snav-item snav-sub" href="${linkTo(sec, m.name)}"><b>${sec.no}.${i+1}</b>${esc(m.name)}</a>`
+    ).join("")
   ).join("");
 }
 
-/* ---------- 手冊檔案 ---------- */
-let files = [], curSystem = null, editingFileId = null;
+/* ---------- 分頁內容 ---------- */
+let files = [], curSec = null, curSystem = null, editingFileId = null;
 
 async function loadFiles(){
   const {data, error} = await sb.from("manual_files").select("*").order("modified_at", {ascending:false});
   if(error) console.warn("manual_files 讀取失敗：", error.message);
   files = error ? [] : (data || []);
-  if(curSystem) renderManual(curSystem);
+  if(curSystem) renderDoc();
 }
 
 // 「1 小時前」這種相對時間；超過 30 天直接顯示日期
@@ -571,54 +586,71 @@ function relTime(ts){
 }
 const isRecent = ts => (Date.now() - new Date(splitTs(ts).join("T")).getTime()) < 7*86400000;
 
-function renderManual(system){
-  const m = MANUALS.find(x => x.name === system);
-  $("mTitle").textContent = system;
+function renderDoc(){
+  const sec = curSec, system = curSystem;
+  const m = sec.items.find(x => x.name === system);
+  $("mTitle").textContent = `${system}　${sec.title}`;
+
   const folder = $("mFolder");
   if(m && m.url){
     folder.href = m.url;
     folder.innerHTML = FOLDER_ICON + "開啟雲端資料夾";
     folder.classList.remove("hidden");
   } else folder.classList.add("hidden");
+  $("addFileBtn").textContent = sec.kind === "link" ? "＋ 新增網址" : "＋ 新增檔案";
 
-  const rows = files.filter(f => f.system === system);
+  const rows = files.filter(f => f.system === system && (f.section || "操作手冊") === sec.title);
   if(!rows.length){
-    $("mBody").innerHTML = `<div class="empty"><b>目前沒有檔案</b>${session ? "按右上「＋ 新增檔案」加入第一份手冊。" : "管理者登入後即可新增。"}</div>`;
+    const what = sec.kind === "link" ? "網址" : "檔案";
+    $("mBody").innerHTML = `<div class="empty"><b>目前沒有${what}</b>${session ? `按右上「＋ 新增${what}」加入第一筆。` : "管理者登入後即可新增。"}</div>`;
     return;
   }
-  $("mBody").innerHTML = `<div class="tablewrap"><table class="ftable">
-    <thead><tr><th>檔案名稱</th><th>類型</th><th>最後修改 ▼</th><th>擁有者</th><th>連結</th>${session?"<th></th>":""}</tr></thead>
-    <tbody>${rows.map(f => `<tr>
-      <td><span class="fname">${esc(f.file_name)}</span></td>
-      <td><span class="ftype">${esc(f.file_type||"—")}</span></td>
-      <td><span class="fmod">${esc(relTime(f.modified_at))}${isRecent(f.modified_at)?'<span class="fnew">近期更新</span>':""}</span></td>
-      <td><span class="fowner">${esc(f.owner||"—")}</span></td>
-      <td><a class="fopen" href="${esc(f.url)}" target="_blank" rel="noopener">開啟 ↗</a></td>
-      ${session?`<td><span class="facts">
+
+  const acts = f => session ? `<td><span class="facts">
         <button type="button" class="btn-ghost btn-sm" data-fedit="${esc(f.id)}">編輯</button>
-        <button type="button" class="btn-danger btn-sm" data-fdel="${esc(f.id)}">刪除</button></span></td>`:""}
-    </tr>`).join("")}</tbody></table></div>`;
+        <button type="button" class="btn-danger btn-sm" data-fdel="${esc(f.id)}">刪除</button></span></td>` : "";
+  const mod = f => `<td><span class="fmod">${esc(relTime(f.modified_at))}${isRecent(f.modified_at)?'<span class="fnew">近期更新</span>':""}</span></td>`;
+  const open = f => `<td><a class="fopen" href="${esc(f.url)}" target="_blank" rel="noopener">開啟 ↗</a></td>`;
+
+  const head = sec.kind === "link"
+    ? `<th>網址名稱</th><th>場地</th><th>網址</th><th>最後修改 ▼</th>`
+    : `<th>檔案名稱</th><th>類型</th><th>最後修改 ▼</th><th>擁有者</th><th>連結</th>`;
+  const body = rows.map(f => sec.kind === "link"
+    ? `<tr><td><span class="fname">${esc(f.file_name)}</span></td>
+         <td>${(f.venues||[]).map(v=>`<span class="chip">${esc(String(v).toUpperCase())}</span>`).join(" ") || '<span class="ftype">—</span>'}</td>
+         ${open(f)}${mod(f)}${acts(f)}</tr>`
+    : `<tr><td><span class="fname">${esc(f.file_name)}</span></td>
+         <td><span class="ftype">${esc(f.file_type||"—")}</span></td>
+         ${mod(f)}<td><span class="fowner">${esc(f.owner||"—")}</span></td>${open(f)}${acts(f)}</tr>`
+  ).join("");
+
+  $("mBody").innerHTML = `<div class="tablewrap"><table class="ftable">
+    <thead><tr>${head}${session?"<th></th>":""}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
-/* ---------- 路由：#/ 首頁、#/manual/<系統名稱> ---------- */
+/* ---------- 路由：#/ 首頁、#/d/<分區>/<系統名稱> ---------- */
 function route(){
   const h = decodeURIComponent(location.hash.replace(/^#/, ""));
-  const want = h.startsWith("/manual/") ? h.slice(8) : null;
-  curSystem = (want && MANUALS.some(m => m.name === want)) ? want : null;
+  const m = h.match(/^\/d\/([a-z]+)\/(.+)$/);
+  const sec = m ? secByKey(m[1]) : null;
+  const sys = (sec && sec.items.some(x => x.name === m[2])) ? m[2] : null;
+  curSec = sys ? sec : null;
+  curSystem = sys;
 
   $("viewHome").classList.toggle("hidden", !!curSystem);
   $("viewManual").classList.toggle("hidden", !curSystem);
   $("addFileBtn").classList.toggle("hidden", !(curSystem && session));
-  document.querySelectorAll(".snav-item").forEach(a => {
-    const t = a.dataset.nav === "home" ? null : decodeURIComponent(a.getAttribute("href").slice(9));
-    a.classList.toggle("on", t === curSystem);
-  });
-  if(curSystem) renderManual(curSystem);
+  const here = curSystem ? linkTo(curSec, curSystem) : "";
+  document.querySelectorAll(".snav-item").forEach(a =>
+    a.classList.toggle("on", a.getAttribute("href") === here));
+  if(curSystem) renderDoc();
   window.scrollTo(0, 0);
 }
 
 function buildVenueInputs(){
-  $("inVenues").innerHTML = VENUES.map(v=>`<label><input type="checkbox" value="${esc(v)}"> ${esc(v)}</label>`).join("");
+  const chips = VENUES.map(v=>`<label><input type="checkbox" value="${esc(v)}"> ${esc(v)}</label>`).join("");
+  $("inVenues").innerHTML  = chips;
+  $("inFVenues").innerHTML = chips;
   $("fVenue").innerHTML = `<option value="">全部</option>` + VENUES.map(v=>`<option>${esc(v)}</option>`).join("");
 }
 
@@ -828,9 +860,16 @@ $("noteForm").addEventListener("submit", e => { e.preventDefault(); saveForm(); 
 
 /* ---------- 手冊檔案的新增／編輯／刪除 ---------- */
 function openFileForm(rec){
+  const isLink = curSec.kind === "link";
   editingFileId = rec ? rec.id : null;
-  $("flTitle").textContent = rec ? "編輯檔案" : "新增檔案";
+  $("flTitle").textContent = (rec ? "編輯" : "新增") + (isLink ? "網址" : "檔案");
+  $("lbFName").textContent = isLink ? "網址名稱" : "檔案名稱";
+  $("lbFUrl").textContent  = isLink ? "網址" : "連結";
+  $("inFName").placeholder = isLink ? "例：排班系統正式站" : "例：障礙表單系統操作手冊";
+  $("rowFileOnly").classList.toggle("hidden", isLink);
+  $("rowLinkOnly").classList.toggle("hidden", !isLink);
   $("flMsg").classList.add("hidden");
+
   const now = new Date();
   const [d, t] = rec ? splitTs(rec.modified_at) : [todayStr(), `${pad(now.getHours())}:${pad(now.getMinutes())}`];
   $("inFName").value  = rec ? (rec.file_name || "") : "";
@@ -839,16 +878,23 @@ function openFileForm(rec){
   $("inFOwner").value = rec ? (rec.owner || "") : (session ? String(session.user.email).split("@")[0] : "");
   $("inFDate").value  = d;
   $("inFTime").value  = t;
+  const picked = (rec?.venues || []).map(v => String(v).toUpperCase());
+  document.querySelectorAll("#inFVenues input").forEach(c => { c.checked = picked.includes(c.value.toUpperCase()); });
   $("fileDlg").showModal();
 }
 
 async function saveFileForm(){
+  const isLink = curSec.kind === "link";
+  const venues = [...document.querySelectorAll("#inFVenues input:checked")].map(c => c.value);
+  if(isLink && !venues.length) return showMsg("flMsg", "請至少勾選一個場地。");
   const payload = {
+    section:     curSec.title,
     system:      curSystem,
     file_name:   $("inFName").value.trim(),
     url:         $("inFUrl").value.trim(),
-    file_type:   $("inFType").value,
-    owner:       $("inFOwner").value.trim() || null,
+    file_type:   isLink ? "網址" : $("inFType").value,
+    owner:       isLink ? null : ($("inFOwner").value.trim() || null),
+    venues:      isLink ? venues : [],
     modified_at: `${$("inFDate").value}T${$("inFTime").value}:00`
   };
   $("flSubmit").disabled = true;
