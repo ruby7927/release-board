@@ -544,7 +544,7 @@ function syncCategoryOptions(){
 const listOf = a => (a || []).filter(x => x && x.name);
 const SECTIONS = [
   { key:"manual", no:2, title:"操作手冊", kind:"file", items: listOf(CFG.manuals) },
-  { key:"link",   no:3, title:"網址連結", kind:"link", items: listOf(CFG.links)   }
+  { key:"link",   no:3, title:"系統網址", kind:"link", items: listOf(CFG.links), alias:["網址連結"] }
 ].filter(s => s.items.length);
 const secByKey = k => SECTIONS.find(s => s.key === k);
 
@@ -599,7 +599,9 @@ function renderDoc(){
   } else folder.classList.add("hidden");
   $("addFileBtn").textContent = sec.kind === "link" ? "＋ 新增網址" : "＋ 新增檔案";
 
-  const rows = files.filter(f => f.system === system && (f.section || "操作手冊") === sec.title);
+  // alias：分區改過名稱時，仍讀得到用舊名稱存的資料
+  const names = [sec.title, ...(sec.alias || [])];
+  const rows = files.filter(f => f.system === system && names.includes(f.section || "操作手冊"));
   if(!rows.length){
     const what = sec.kind === "link" ? "網址" : "檔案";
     $("mBody").innerHTML = `<div class="empty"><b>目前沒有${what}</b>${session ? `按右上「＋ 新增${what}」加入第一筆。` : "管理者登入後即可新增。"}</div>`;

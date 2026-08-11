@@ -28,7 +28,7 @@ window.APP_CONFIG = {
     { name: "請假系統",                  url: "https://drive.google.com/drive/folders/1PMcD-UastGpJHLeyLjMS9rCzRPhdgDY8?usp=sharing" }
   ],
 
-  // ---- 側邊分頁 3. 網址連結 ----
+  // ---- 側邊分頁 3. 系統網址 ----
   // 每個系統一個分頁，登入後可自行新增「網址名稱 + 場地 + 網址」
   links: [
     { name: "荷官排班系統" },
