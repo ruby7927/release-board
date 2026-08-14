@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>更版公告 — 每週系統更版看板</title>
-<meta name="description" content="每週系統更版公告，現場人員免登入查詢。">
+<title>更版及維護公告 — 每週公告看板</title>
+<meta name="description" content="每週更版與維護公告，現場人員免登入查詢。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -71,6 +71,10 @@
   .snav-sec{display:flex;gap:8px;padding:14px 12px 6px;font-size:14px;font-weight:700;color:var(--ink)}
   .snav-sec b{font-weight:600;color:var(--ink-faint);font-size:12.5px}
   .snav-sub{padding-left:22px}
+  /* 沒有子項目的頂層分頁，字重比照分區標題。
+     要寫成 .snav-item.snav-top 才蓋得過 .snav-item.on 的 600（選取時也要維持粗體） */
+  .snav-item.snav-top{font-weight:700;color:var(--ink)}
+  .snav-item.snav-top.on{color:var(--man-ink)}
 
   /* ---------------- 操作手冊分頁 ---------------- */
   .mhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
@@ -174,6 +178,124 @@
   .empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r);padding:38px 20px;text-align:center;color:var(--ink-faint)}
   .empty b{display:block;color:var(--ink-soft);font-size:15px;margin-bottom:4px}
 
+  /* ---------------- 維護排程 ---------------- */
+  /* 週次公告橫幅：現場一眼要看到的是「哪天、幾點到幾點、停不停機」 */
+  .mw{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}
+  .mw-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .mw-date{font-family:var(--mono);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3}
+  .mw-time{font-family:var(--mono);font-size:16px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .mw-tags{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}
+  .tag{font-size:11.5px;letter-spacing:.06em;padding:4px 11px;border-radius:999px;font-weight:600;white-space:nowrap}
+  .tag.down{background:var(--danger-soft);color:var(--danger)}
+  .tag.nodown{background:var(--done-soft);color:var(--done)}
+  .tag.note{background:var(--soon-soft);color:var(--soon)}
+  .tag.week{background:var(--grp-soft);color:var(--grp);font-family:var(--mono)}
+  /* 維護日已過但還沒封存，提醒還能改到哪一天 */
+  .mw-until{margin-top:10px;font-size:12.5px;color:var(--soon)}
+  .mw-team{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .mw-team .lab{font-size:11.5px;letter-spacing:.14em;color:var(--ink-faint);display:block;margin-bottom:5px}
+  .mw-team pre{margin:0;font-family:var(--sans);font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.75}
+
+  /* 週次切換：93 週用下拉太長，改用小月曆，只有排了維護的日子點得下去 */
+  .mw-pick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .mw-pick .btn-ghost{padding:8px 12px}
+  .mw-pick .sp{flex:1}
+  .cal-wrap{position:relative}
+  .cal-btn{display:inline-flex;align-items:center;gap:9px;min-width:196px;
+    background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);
+    padding:8px 12px;font-family:var(--mono);font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .cal-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .cal-btn .cal-mark{font-family:var(--sans);font-size:11px;padding:2px 8px;border-radius:999px;
+    background:var(--surface-2);color:var(--ink-soft)}
+  .cal-btn .cal-caret{margin-left:auto;font-size:10px;color:var(--ink-faint)}
+
+  .cal{position:absolute;top:calc(100% + 6px);left:0;z-index:40;width:268px;padding:10px;
+    background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);
+    box-shadow:0 14px 36px -14px rgba(0,0,0,.4)}
+  .cal-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .cal-head b{flex:1;text-align:center;font-family:var(--mono);font-size:13px}
+  .cal-nav{padding:3px 10px;background:transparent;border:1px solid var(--line-strong);color:var(--ink-soft);font-size:12px}
+  .cal-nav:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .cal-wd{text-align:center;font-size:11px;color:var(--ink-faint);padding:2px 0}
+  /* 沒有維護排程的日子灰掉且不可點，一眼就看得出哪幾天有東西 */
+  .cal-day{height:30px;padding:0;border:1px solid transparent;border-radius:var(--r);
+    background:transparent;color:var(--line-strong);font-family:var(--mono);font-size:12.5px;cursor:default}
+  .cal-day.has{color:var(--ink);background:var(--surface-2);border-color:var(--line);font-weight:600;cursor:pointer}
+  .cal-day.has:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .cal-day.on,.cal-day.on:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+  .cal-foot{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--ink-faint);text-align:center}
+
+  /* 任務表格
+     table-layout:fixed ＋ 欄寬全部指定，讓表格一定塞得進畫面、不出現橫向拉桿。
+     欄位數壓到最少：工時併進執行時間、備註併進更新項目、填寫人併進狀態，
+     長內容一律靠換行消化，不靠加寬。 */
+  .mtable{table-layout:fixed;width:100%;border-collapse:collapse;font-size:14px;background:var(--surface)}
+  .mtable th{background:var(--bar);color:var(--bar-ink);font-size:12.5px;font-weight:700;text-align:left;
+    padding:10px 12px;white-space:nowrap;border-bottom:1px solid var(--bar-line)}
+  .mtable td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  .mtable tr:last-child td{border-bottom:none}
+  .mtable tbody tr:hover{background:var(--surface-2)}
+  .mtable .c-wk {width:104px;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .mtable .c-sys{width:13%;font-weight:600;overflow-wrap:anywhere}
+  .mtable .c-own{width:10%;color:var(--ink-soft);font-size:13px;white-space:pre-line;overflow-wrap:anywhere}
+  /* 更新項目不指定寬度，吃掉其餘空間 */
+  .mtable .c-det{white-space:pre-wrap;line-height:1.65;overflow-wrap:anywhere}
+  .mtable .c-det.none{color:var(--ink-faint)}
+  .mtable .c-tim{width:118px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .mtable .c-st {width:106px}   /* 容得下最長的狀態「無更新項目」 */
+  .mtable .c-act{width:98px;text-align:right}
+  .mtable .c-act button{white-space:nowrap;padding:4px 8px}
+  /* 併進主欄位的次要資訊：工時、填寫人 */
+  .mtable .by{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:3px}
+  /* 備註接在更新項目底下，用虛線分隔 */
+  .mtable .c-memo{margin-top:7px;padding-top:6px;border-top:1px dashed var(--line-strong);
+    font-size:12.5px;color:var(--ink-soft);white-space:pre-wrap}
+  .mtable .c-memo b{font-weight:600;color:var(--ink-faint);font-size:11.5px}
+
+  @media (max-width:1024px){
+    /* 視窗較窄時把固定欄再收一點，仍然不出現拉桿 */
+    .mtable{font-size:13.5px}
+    .mtable th,.mtable td{padding:9px 8px}
+    .mtable .c-sys{width:16%}
+    .mtable .c-tim{width:104px}
+    .mtable .c-act{width:88px}
+  }
+  .st{display:inline-block;font-size:11.5px;padding:3px 10px;border-radius:999px;font-weight:600;white-space:nowrap}
+  .st.done{background:var(--done-soft);color:var(--done)}
+  .st.pending{background:var(--soon-soft);color:var(--soon)}
+  .st.na{background:var(--surface-2);color:var(--ink-faint)}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+
+  /* 歷史查詢的結果列，帶週次欄 */
+  .mtable .c-wk{font-family:var(--mono);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .mtable .c-wk a{color:var(--accent);text-decoration:none}
+  .mtable .c-wk a:hover{text-decoration:underline}
+
+  .mhint{font-size:12.5px;color:var(--ink-faint);margin:-6px 0 14px;line-height:1.6}
+
+  /* 已封存的一週：只剩執行時間與狀態可以補填 */
+  .tag.lock{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line-strong)}
+  .lockbar{background:var(--soon-soft);border:1px solid var(--soon-line);border-radius:var(--r);
+    padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--soon);line-height:1.65}
+  .fld.ro label{color:var(--ink-faint)}
+  .fld.ro input:disabled,.fld.ro textarea:disabled{background:var(--surface-2);color:var(--ink-soft);
+    border-color:var(--line);cursor:not-allowed;-webkit-text-fill-color:var(--ink-soft);opacity:1}
+  /* 停用時維持各自的底色，只降透明度，避免 btn-primary 變成透明看不出是按鈕 */
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .btn-primary:disabled:hover{background:var(--accent)}
+  .btn-ghost:disabled:hover{border-color:var(--line-strong);color:var(--ink-soft)}
+
+  /* 填寫對話框裡的工時試算 */
+  .calc{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:var(--r);padding:7px 10px;margin-top:-4px}
+
+  @media (max-width:860px){
+    .mw-tags{margin-left:0;width:100%}
+  }
+
   /* ---------------- 對話框 ---------------- */
   dialog{border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 28px));box-shadow:0 20px 60px -20px rgba(0,0,0,.45)}
   dialog::backdrop{background:rgba(12,18,16,.55)}
@@ -230,8 +352,8 @@
 <header>
   <div class="hwrap">
     <div class="brand">
-      <h1>更版公告</h1>
-      <p>每週系統更版內容 · 現場查詢看板</p>
+      <h1>更版及維護公告</h1>
+      <p>每週公告內容 · 現場查詢看板</p>
     </div>
     <div class="spacer"></div>
     <span class="who hidden" id="who"></span>
@@ -245,7 +367,6 @@
 
 <aside class="side">
   <nav class="snav" aria-label="頁面導覽">
-    <a class="snav-item" href="#/" data-nav="home"><b>1.</b>更版訊息（首頁）</a>
     <div id="navSections"></div>
   </nav>
 </aside>
@@ -310,6 +431,82 @@
       <button class="btn-primary hidden" id="addFileBtn">＋ 新增檔案</button>
     </div>
     <div id="mBody"></div>
+  </section>
+
+  <!-- 1.1 / 1.2 各場地維護排程：公告 + 填寫 -->
+  <section id="viewWeek" class="hidden">
+    <div class="mhead">
+      <h2 id="wkTitle"></h2>
+      <button class="btn-ghost" id="newWinBtn">＋ 建立新的一週</button>
+      <button class="btn-primary" id="addTaskBtn">＋ 填寫維護項目</button>
+    </div>
+    <div class="mw-pick">
+      <button class="btn-ghost" id="wkPrev" title="上一週" aria-label="上一週">←</button>
+      <div class="cal-wrap">
+        <button type="button" class="cal-btn" id="wkBtn" aria-haspopup="dialog" aria-expanded="false">
+          <span id="wkBtnDate"></span>
+          <span class="cal-mark hidden" id="wkBtnMark"></span>
+          <span class="cal-caret">▾</span>
+        </button>
+        <div class="cal hidden" id="wkCal" role="dialog" aria-label="選擇維護週次">
+          <div class="cal-head">
+            <button type="button" class="cal-nav" id="calPrev" aria-label="上個月">←</button>
+            <b id="calTitle"></b>
+            <button type="button" class="cal-nav" id="calNext" aria-label="下個月">→</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-foot" id="calHint"></div>
+        </div>
+      </div>
+      <button class="btn-ghost" id="wkNext" title="下一週" aria-label="下一週">→</button>
+      <span class="sp"></span>
+      <button class="btn-ghost" id="wkLatest">回到最新一週</button>
+    </div>
+    <div id="wkBody"></div>
+  </section>
+
+  <!-- 1.3 / 1.4 各場地歷史紀錄 -->
+  <section id="viewSearch" class="hidden">
+    <div class="mhead"><h2 id="qTitle"></h2></div>
+    <section class="filters">
+      <div class="flabel">查詢條件</div>
+      <div class="frow">
+        <div class="f grow">
+          <label for="qText">關鍵字</label>
+          <input type="search" id="qText" placeholder="搜尋更新項目、系統、負責人、備註…" autocomplete="off">
+        </div>
+        <div class="f dates">
+          <label for="qFrom">維護日期</label>
+          <div class="drange">
+            <input type="date" id="qFrom" aria-label="起始日期">
+            <span>—</span>
+            <input type="date" id="qTo" aria-label="結束日期">
+          </div>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f"><label for="qSys">系統</label><select id="qSys"><option value="">全部</option></select></div>
+        <div class="f"><label for="qOwn">負責人</label><select id="qOwn"><option value="">全部</option></select></div>
+        <div class="f"><label for="qSt">狀態</label>
+          <select id="qSt">
+            <option value="">全部</option>
+            <option value="done">完成</option>
+            <option value="pending">待執行</option>
+            <option value="na">無更新項目</option>
+          </select>
+        </div>
+        <div class="f"><label for="qDown">維護方式</label>
+          <select id="qDown">
+            <option value="">全部</option>
+            <option value="1">停機維護</option>
+            <option value="0">不停機維護</option>
+          </select>
+        </div>
+        <button class="btn-ghost" id="qClear">清除條件</button>
+      </div>
+    </section>
+    <div class="summary"><span class="n" id="qCount">載入中…</span><span class="hint" id="qHint"></span></div>
+    <div id="qBody"></div>
   </section>
 </main>
 
@@ -456,6 +653,138 @@
   </form>
 </dialog>
 
+<!-- 填寫維護項目 -->
+<dialog id="taskDlg">
+  <form method="dialog" id="taskForm">
+    <div class="d-head"><h3 id="tkTitle">填寫維護項目</h3><button type="button" class="x" data-close="taskDlg" aria-label="關閉">×</button></div>
+    <div class="d-body">
+      <div class="lockbar hidden" id="tkLock"></div>
+      <div class="two">
+        <div class="fld">
+          <label for="inSys">系統<span class="req">*</span></label>
+          <input type="text" id="inSys" list="sysList" placeholder="例：LCS" required>
+          <datalist id="sysList"></datalist>
+        </div>
+        <div class="fld">
+          <label for="inOwn">負責人</label>
+          <input type="text" id="inOwn" list="ownList" placeholder="例：Tony">
+          <datalist id="ownList"></datalist>
+        </div>
+      </div>
+
+      <div class="fld">
+        <label for="inDet">更新項目<span class="req">*</span></label>
+        <textarea id="inDet" placeholder="一項一行，例：&#10;1. 百家樂新增注區&#10;2. 移除 EROU 73 桌" required></textarea>
+        <div class="tip">本週沒有要更新就填「無」，狀態選「無更新項目」。</div>
+      </div>
+
+      <div class="fld">
+        <label for="inSt">狀態<span class="req">*</span></label>
+        <select id="inSt">
+          <option value="pending">待執行</option>
+          <option value="done">完成</option>
+          <option value="na">無更新項目</option>
+        </select>
+      </div>
+
+      <div class="fld">
+        <label>執行時間</label>
+        <div class="two">
+          <input type="time" id="inTkStart" aria-label="開始時間">
+          <input type="time" id="inTkEnd" aria-label="結束時間">
+        </div>
+        <div class="tip">GMT+8。做完再回來補即可，工時會自動算。</div>
+      </div>
+      <div class="fld"><div class="calc" id="tkCalc">工時：—</div></div>
+
+      <div class="fld">
+        <label for="inTkNote">備註</label>
+        <input type="text" id="inTkNote" placeholder="選填">
+      </div>
+
+      <div class="fld">
+        <label for="inBy">填寫人<span class="req">*</span></label>
+        <input type="text" id="inBy" placeholder="例：Tony" required>
+        <div class="tip">因為填寫不用帳號，這裡留下的名字就是修改紀錄的依據，請填本名或英文名。</div>
+      </div>
+
+      <div class="msg err hidden" id="tkMsg"></div>
+    </div>
+    <div class="d-foot">
+      <button type="button" class="btn-danger hidden" id="tkDel">刪除</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn-ghost" data-close="taskDlg">取消</button>
+      <button type="submit" class="btn-primary" id="tkSubmit">儲存</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 建立新的一週 -->
+<dialog id="winDlg">
+  <form method="dialog" id="winForm">
+    <div class="d-head"><h3 id="wnTitle">建立新的一週</h3><button type="button" class="x" data-close="winDlg" aria-label="關閉">×</button></div>
+    <div class="d-body">
+      <div class="fld">
+        <label for="inWDate">維護日期<span class="req">*</span></label>
+        <input type="date" id="inWDate" required>
+      </div>
+      <div class="fld">
+        <label>維護時段<span class="req">*</span></label>
+        <div class="two">
+          <input type="time" id="inWStart" required aria-label="開始時間">
+          <input type="time" id="inWEnd" required aria-label="結束時間">
+        </div>
+        <div class="tip">GMT+8。</div>
+      </div>
+      <div class="fld">
+        <label for="inWDown">維護方式<span class="req">*</span></label>
+        <select id="inWDown">
+          <option value="1">停機維護</option>
+          <option value="0">不停機維護</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label for="inWNote">補充說明</label>
+        <input type="text" id="inWNote" placeholder="選填，例：地震_停機維護">
+      </div>
+      <div class="fld">
+        <label for="inWTeam">Release Team</label>
+        <textarea id="inWTeam" style="min-height:110px" placeholder="LCS : Tony&#10;Streaming : Bernard"></textarea>
+        <div class="tip">本週各系統負責人名單，會顯示在公告區。預設沿用上一週。</div>
+      </div>
+      <div class="fld">
+        <label><input type="checkbox" id="inWCopy" checked style="width:auto;margin-right:6px">
+          帶入上一週的系統與負責人清單</label>
+        <div class="tip" id="wnCopyTip"></div>
+      </div>
+      <div class="msg err hidden" id="wnMsg"></div>
+    </div>
+    <div class="d-foot">
+      <button type="button" class="btn-ghost" data-close="winDlg">取消</button>
+      <button type="submit" class="btn-primary" id="wnSubmit">建立</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 共用編輯密碼（config.js 有設定才會跳出） -->
+<dialog id="passDlg">
+  <form method="dialog" id="passForm">
+    <div class="d-head"><h3>請輸入編輯密碼</h3><button type="button" class="x" data-close="passDlg" aria-label="關閉">×</button></div>
+    <div class="d-body">
+      <div class="fld">
+        <label for="inPass">編輯密碼</label>
+        <input type="password" id="inPass" autocomplete="off" required>
+        <div class="tip">同一台裝置輸入一次就好，關掉瀏覽器才需要再輸入。</div>
+      </div>
+      <div class="msg err hidden" id="psMsg"></div>
+    </div>
+    <div class="d-foot">
+      <button type="button" class="btn-ghost" data-close="passDlg">取消</button>
+      <button type="submit" class="btn-primary">確定</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
@@ -505,6 +834,7 @@ function boot(){
   route();
   load();
   loadFiles();
+  loadMaint();
 }
 
 function applyAuthUI(){
@@ -543,9 +873,15 @@ function syncCategoryOptions(){
    兩個分區共用 manual_files，靠 section 欄位區分；欄位與表單也依分區不同。 */
 const listOf = a => (a || []).filter(x => x && x.name);
 const SECTIONS = [
-  { key:"manual", no:2, title:"操作手冊", kind:"file", items: listOf(CFG.manuals) },
-  { key:"link",   no:3, title:"系統網址", kind:"link", items: listOf(CFG.links), alias:["網址連結"] }
+  { key:"manual", no:3, title:"操作手冊", kind:"file", items: listOf(CFG.manuals) },
+  { key:"link",   no:4, title:"系統網址", kind:"link", items: listOf(CFG.links), alias:["網址連結"] }
 ].filter(s => s.items.length);
+
+/* 維護排程的場地清單。順序＝選單順序，第一個是網站的預設頁。 */
+const MVENUES = ((CFG.maintenance || {}).venues || [{ code:"CB", title:"Cebu Maintenance Schedule", history:"Cebu歷史紀錄" }])
+  .filter(v => v && v.code);
+const HOME_VENUE = MVENUES[0].code;
+const venueOf = code => MVENUES.find(v => v.code === code);
 const secByKey = k => SECTIONS.find(s => s.key === k);
 
 const FOLDER_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -553,7 +889,19 @@ const FOLDER_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
 const linkTo = (sec, name) => `#/d/${sec.key}/${encodeURIComponent(name)}`;
 
 function buildNav(){
-  $("navSections").innerHTML = SECTIONS.map(sec =>
+  // snav-top：沒有子項目的頂層分頁，字重比照分區標題
+  const notes = `<a class="snav-item snav-top" href="#/"><b>1.</b>系統更版訊息</a>`;
+
+  // 2. Maintenance Schedule：先列各場地的排程，再列各場地的歷史紀錄
+  let n = 0;
+  const schedules = MVENUES.map(v =>
+    `<a class="snav-item snav-sub" href="#/s/${esc(v.code)}"><b>2.${++n}</b>${esc(v.title)}</a>`).join("");
+  const histories = MVENUES.map(v =>
+    `<a class="snav-item snav-sub" href="#/h/${esc(v.code)}"><b>2.${++n}</b>${esc(v.history || v.code + " 歷史紀錄")}</a>`).join("");
+
+  const maint = `<div class="snav-sec"><b>2.</b>Maintenance Schedule</div>` + schedules + histories;
+
+  $("navSections").innerHTML = notes + maint + SECTIONS.map(sec =>
     `<div class="snav-sec"><b>${sec.no}.</b>${esc(sec.title)}</div>` +
     sec.items.map((m, i) =>
       `<a class="snav-item snav-sub" href="${linkTo(sec, m.name)}"><b>${sec.no}.${i+1}</b>${esc(m.name)}</a>`
@@ -630,7 +978,13 @@ function renderDoc(){
     <thead><tr>${head}${session?"<th></th>":""}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
-/* ---------- 路由：#/ 首頁、#/d/<分區>/<系統名稱> ---------- */
+/* ---------- 路由 ----------
+   #/                       首頁＝系統更版訊息（#/notes 是舊網址，保留相容）
+   #/s/<場地>               該場地的維護排程
+   #/s/<場地>/<YYYY-MM-DD>  直接開到某一週（歷史紀錄的結果會連過來）
+   #/h/<場地>               該場地的歷史紀錄
+   #/d/<分區>/<系統名稱>     操作手冊、系統網址
+------------------------------------------------------------------ */
 function route(){
   const h = decodeURIComponent(location.hash.replace(/^#/, ""));
   const m = h.match(/^\/d\/([a-z]+)\/(.+)$/);
@@ -639,13 +993,35 @@ function route(){
   curSec = sys ? sec : null;
   curSystem = sys;
 
-  $("viewHome").classList.toggle("hidden", !!curSystem);
-  $("viewManual").classList.toggle("hidden", !curSystem);
+  const s = h.match(/^\/s\/([A-Za-z]+)(?:\/(\d{4}-\d{2}-\d{2}))?$/);
+  const hi = h.match(/^\/h\/([A-Za-z]+)$/);
+  const sVenue = s  && venueOf(s[1])  ? s[1]  : null;
+  const hVenue = hi && venueOf(hi[1]) ? hi[1] : null;
+
+  const view = sys ? "doc"
+             : hVenue ? "search"
+             : sVenue ? "week"
+             : "home";                       // 其餘（含 #/、#/notes、空的 hash）都是首頁
+
+  if(view === "week")   mtVenue = sVenue;
+  if(view === "search") mtVenue = hVenue;
+
+  $("viewHome").classList.toggle("hidden",   view !== "home");
+  $("viewManual").classList.toggle("hidden", view !== "doc");
+  $("viewWeek").classList.toggle("hidden",   view !== "week");
+  $("viewSearch").classList.toggle("hidden", view !== "search");
   $("addFileBtn").classList.toggle("hidden", !(curSystem && session));
-  const here = curSystem ? linkTo(curSec, curSystem) : "";
+
+  const here = view === "doc"    ? linkTo(curSec, curSystem)
+             : view === "week"   ? `#/s/${mtVenue}`
+             : view === "search" ? `#/h/${mtVenue}`
+             : "#/";
   document.querySelectorAll(".snav-item").forEach(a =>
     a.classList.toggle("on", a.getAttribute("href") === here));
-  if(curSystem) renderDoc();
+
+  if(view === "doc")    renderDoc();
+  if(view === "week"){  if(s && s[2]) mtWeekBy[mtVenue] = s[2]; renderWeek(); }
+  if(view === "search") renderSearch();
   window.scrollTo(0, 0);
 }
 
@@ -936,6 +1312,606 @@ $("list").addEventListener("click", async e => {
     await load();
   }
 });
+
+/* ============================================================
+   維護排程
+   一週一個維護視窗（maintenance_windows），底下掛 N 筆任務（maintenance_tasks）。
+   填寫不需要帳號，改用「填寫人」欄位加上資料庫的 trigger 留下修改紀錄。
+   ============================================================ */
+const MCFG   = CFG.maintenance || {};
+const ST_TXT = { done:"完成", pending:"待執行", na:"無更新項目" };
+
+// mtWeekBy 各場地各記各的，在 Cebu 翻到某一週後切去 Mexico 再切回來不會跑掉
+let mtWindows = [], mtTasks = [], mtVenue = HOME_VENUE, mtWeekBy = {}, mtEditing = null, mtReady = false;
+
+/* PostgREST 單次最多回 1000 筆，資料超過就得分頁拿 */
+async function fetchAll(table, order, asc){
+  const PAGE = 1000, out = [];
+  for(let from = 0; ; from += PAGE){
+    const {data, error} = await sb.from(table).select("*")
+      .order(order, {ascending: asc}).range(from, from + PAGE - 1);
+    if(error) throw error;
+    out.push(...(data || []));
+    if(!data || data.length < PAGE) return out;
+  }
+}
+
+async function loadMaint(){
+  try{
+    [mtWindows, mtTasks] = await Promise.all([
+      fetchAll("maintenance_windows", "week_date", false),
+      fetchAll("maintenance_tasks",   "seq",       true)
+    ]);
+  }catch(e){
+    mtReady = false;
+    $("wkBody").innerHTML = `<div class="empty"><b>維護排程讀取失敗</b>${esc(e.message)}<br>
+      請確認已在 SQL Editor 執行 schema_maintenance.sql。</div>`;
+    $("qCount").textContent = "";
+    return;
+  }
+  mtReady = true;
+  MVENUES.forEach(v => {
+    if(!mtWeekBy[v.code] || !winOf(v.code, mtWeekBy[v.code])) mtWeekBy[v.code] = defaultWeek(v.code);
+  });
+  // 兩個 render 各自會重建自己需要的選單，這裡只要挑當前畫面重畫
+  if(!$("viewWeek").classList.contains("hidden"))   renderWeek();
+  if(!$("viewSearch").classList.contains("hidden")) renderSearch();
+}
+
+// mtWindows 已依日期遞減排序，filter 會保留順序
+const winsOf    = v      => mtWindows.filter(w => w.venue === v);
+const winOf     = (v, d) => mtWindows.find(w => w.venue === v && w.week_date === d);
+const tasksOf   = id     => mtTasks.filter(t => t.window_id === id).sort((a,b) => (a.seq||0) - (b.seq||0));
+const curWeek   = ()     => mtWeekBy[mtVenue] || null;
+const curWin    = ()     => winOf(mtVenue, curWeek());
+// 預設停在「下一次維護」；沒有未來的場次就看最近做完的那一次
+function defaultWeek(v){
+  const list = winsOf(v);
+  if(!list.length) return null;
+  const today  = todayStr();
+  const future = list.filter(w => w.week_date >= today);
+  return future.length ? future[future.length - 1].week_date : list[0].week_date;
+}
+
+const hhmm = t => t ? String(t).slice(0,5) : null;
+function fmtRange(a, b){
+  const s = hhmm(a), e = hhmm(b);
+  if(s && e) return `${s} → ${e}`;
+  return s || e || "—";
+}
+function fmtDate(d){
+  const [y,m,dd] = String(d||"").split("-").map(Number);
+  const w = (y && m && dd) ? WD[new Date(y, m-1, dd).getDay()] : "";
+  return `${d}（${w}）`;
+}
+// 以本地時間建日期物件；直接 new Date("2026-08-12") 會被當成 UTC，
+// 在負時區（例如 Mexico）會整個差一天
+const dateOf   = s => { const [y,m,d] = String(s).split("-").map(Number); return new Date(y, m-1, d); };
+const plusDays = (s, n) => { const t = dateOf(s); t.setDate(t.getDate() + n);
+                             return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`; };
+// 「本週」以維護日往前推 6 天算，方便判斷是不是眼前這一場
+const daysFromToday = d => (dateOf(d) - dateOf(todayStr())) / 86400000;
+const isThisWeek = d => { const diff = daysFromToday(d); return diff >= -6 && diff <= 6; };
+
+/* ---------- 過去的排程封存 ----------
+   維護日過後仍可完整編輯，直到「下一場維護開始」才固定下來。
+   例：8/12 那場在 8/13～8/18 都能改；8/19 那場一開始，8/12 就只剩
+   「執行時間」與「狀態」可以補——各 Owner 常是做完之後才回來回填結果。
+   還沒排下一場的話，以維護日七天後為界（配合每週一次的節奏）。
+   封存後也不能再新增列。管理者登入後不受限制，方便更正。
+   資料庫端有同一套規則把關（schema_maintenance.sql 的 mt_guard_locked），
+   這裡擋只是讓現場當下就看得出來，不用送出才發現被拒。 */
+const LOCK_FALLBACK_DAYS = 7;      // 改這個的話 schema_maintenance.sql 裡的 7 也要一起改
+// 封存後仍可異動的欄位：執行結果類的資訊常是事後才回填，備註也算
+const LOCK_FREE = ["start_time", "end_time", "status", "notes", "updated_by"];
+
+// 這一週從哪一天起封存＝同場地下一場維護的日期
+function lockFrom(w){
+  const later = winsOf(w.venue).filter(x => x.week_date > w.week_date);
+  return later.length ? later[later.length - 1].week_date       // winsOf 遞減排序，最後一個＝最接近的下一場
+                      : plusDays(w.week_date, LOCK_FALLBACK_DAYS);
+}
+const isLocked = w => !session && !!w && todayStr() >= lockFrom(w);
+const lockNote = `已封存：下一場維護已經開始，這一週的系統、負責人與更新項目都不能再改，` +
+                 `只剩「執行時間」「狀態」與「備註」可以補填。需要更正請用管理者帳號登入。`;
+
+/* ---------- 週次選擇：小月曆 ---------- */
+let calMonth = null;
+
+const ymOf       = d => String(d || "").slice(0, 7);
+const shiftMonth = (ym, n) => { const [y,m] = ym.split("-").map(Number);
+                                const d = new Date(y, m - 1 + n, 1);
+                                return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; };
+// 有維護排程的月份範圍，用來擋住月曆往前往後翻過頭
+function monthRange(){
+  const list = winsOf(mtVenue);
+  return list.length ? { min: ymOf(list[list.length-1].week_date), max: ymOf(list[0].week_date) } : null;
+}
+
+function buildWeekPicker(){
+  const w = curWin();
+  const mark = !w ? "" : w.downtime === true ? "停機" : w.downtime === false ? "不停機" : "";
+  $("wkBtnDate").textContent = w ? w.week_date : "尚未建立";
+  $("wkBtnMark").textContent = mark;
+  $("wkBtnMark").classList.toggle("hidden", !mark);
+  $("wkBtn").disabled = !winsOf(mtVenue).length;
+  if(!$("wkCal").classList.contains("hidden")) renderCal();
+}
+
+function renderCal(){
+  const r = monthRange();
+  if(!r){ $("calGrid").innerHTML = ""; $("calTitle").textContent = ""; $("calHint").textContent = "還沒有任何維護排程"; return; }
+
+  if(!calMonth) calMonth = ymOf(curWeek()) || r.max;
+  if(calMonth < r.min) calMonth = r.min;
+  if(calMonth > r.max) calMonth = r.max;
+
+  const byDate = Object.fromEntries(winsOf(mtVenue).map(w => [w.week_date, w]));
+  const [y, m] = calMonth.split("-").map(Number);
+  $("calTitle").textContent = `${y} 年 ${m} 月`;
+  $("calPrev").disabled = shiftMonth(calMonth, -1) < r.min;
+  $("calNext").disabled = shiftMonth(calMonth,  1) > r.max;
+
+  const lead = new Date(y, m - 1, 1).getDay();        // 該月一號是星期幾
+  const days = new Date(y, m, 0).getDate();
+  let html = WD.map(d => `<div class="cal-wd">${d}</div>`).join("");
+  if(lead) html += `<div style="grid-column:span ${lead}"></div>`;
+
+  for(let d = 1; d <= days; d++){
+    const iso = `${y}-${pad(m)}-${pad(d)}`;
+    const w   = byDate[iso];
+    const cls = ["cal-day", w ? "has" : "", iso === curWeek() ? "on" : ""].filter(Boolean).join(" ");
+    const tip = w ? (w.downtime === true ? "停機維護" : w.downtime === false ? "不停機維護" : "維護") : "";
+    html += `<button type="button" class="${cls}" ${w ? `data-cal="${iso}" title="${esc(tip)}"` : "disabled"}>${d}</button>`;
+  }
+  $("calGrid").innerHTML = html;
+
+  const n = winsOf(mtVenue).filter(w => w.week_date.startsWith(calMonth)).length;
+  $("calHint").textContent = n ? `這個月有 ${n} 場維護` : "這個月沒有維護排程";
+}
+
+function toggleCal(show){
+  const cal = $("wkCal");
+  const open = show === undefined ? cal.classList.contains("hidden") : show;
+  if(open){ calMonth = ymOf(curWeek()) || null; renderCal(); }
+  cal.classList.toggle("hidden", !open);
+  $("wkBtn").setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+// 系統與負責人的清單只取指定場地，Cebu 的系統不會跑到 Mexico 的下拉選單
+function venueLists(v){
+  const ids  = new Set(winsOf(v).map(w => w.id));
+  const mine = mtTasks.filter(t => ids.has(t.window_id));
+
+  const c = {};
+  mine.forEach(t => { const s = (t.system||"").trim(); if(s) c[s] = (c[s]||0) + 1; });
+  // 填寫表單的建議清單依出現次數排，常用的排前面
+  const systems = Object.keys(c).sort((a,b) => c[b] - c[a] || a.localeCompare(b,"zh-Hant"));
+
+  // 負責人欄位可能是「Zet/Gary」或多行，拆成個人才好篩選
+  const people = [...new Set(mine.flatMap(t =>
+    String(t.owner||"").split(/[\/,、，\n]+/).map(s => s.trim()).filter(Boolean)))]
+    .sort((a,b) => a.localeCompare(b,"zh-Hant"));
+  return { systems, people };
+}
+
+// 填寫對話框的建議清單（排程頁用）
+function buildTaskDatalists(){
+  const { systems, people } = venueLists(mtVenue);
+  $("sysList").innerHTML = systems.map(s => `<option value="${esc(s)}">`).join("");
+  $("ownList").innerHTML = people.map(s => `<option value="${esc(s)}">`).join("");
+}
+
+// 查詢條件的下拉（歷史紀錄頁用），下拉選項依名稱排序比較好找
+function buildSearchOptions(){
+  const { systems, people } = venueLists(mtVenue);
+  const keep1 = $("qSys").value, keep2 = $("qOwn").value;
+  $("qSys").innerHTML = `<option value="">全部</option>` +
+    systems.slice().sort((a,b)=>a.localeCompare(b,"zh-Hant")).map(s => `<option>${esc(s)}</option>`).join("");
+  $("qOwn").innerHTML = `<option value="">全部</option>` + people.map(s => `<option>${esc(s)}</option>`).join("");
+  $("qSys").value = keep1; $("qOwn").value = keep2;
+}
+
+/* ---------- 查詢條件各場地各記各的 ----------
+   1.3 與 1.4 共用同一組輸入框，切場地時要把舊的收起來、換上新的，
+   否則在 Cebu 篩了 LCS 再切到 Mexico，條件會跟著跑過去。 */
+const QF = ["qText","qFrom","qTo","qSys","qOwn","qSt","qDown"];
+let mtFilterBy = {}, searchVenueShown = null;
+const readFilters  = ()  => Object.fromEntries(QF.map(id => [id, $(id).value]));
+const writeFilters = (f) => QF.forEach(id => { $(id).value = (f && f[id]) || ""; });
+
+/* ---------- 1.1 / 1.2 各場地維護排程 ---------- */
+function renderWeek(){
+  if(!mtReady) return;
+  const v = venueOf(mtVenue) || {};
+  $("wkTitle").textContent = v.title || mtVenue;
+  buildWeekPicker();
+  buildTaskDatalists();
+
+  const w = curWin();
+  if(!w){
+    $("wkBody").innerHTML = `<div class="empty"><b>${esc(v.title || mtVenue)}還沒有任何維護排程</b>
+      按右上「＋ 建立新的一週」開始第一週。</div>`;
+    return;
+  }
+
+  const list   = tasksOf(w.id);
+  const locked = isLocked(w);
+  $("addTaskBtn").disabled = locked;               // 封存後不能再新增列
+  $("addTaskBtn").title = locked ? "這一週已封存，不能再新增項目" : "";
+
+  const tags = [
+    isThisWeek(w.week_date) ? `<span class="tag week">本週</span>` : "",
+    w.downtime === true  ? `<span class="tag down">停機維護</span>` :
+    w.downtime === false ? `<span class="tag nodown">不停機維護</span>` : "",
+    (w.note && !/^不?停機維護$/.test(w.note)) ? `<span class="tag note">${esc(w.note)}</span>` : "",
+    locked ? `<span class="tag lock">已封存</span>` : ""
+  ].join("");
+
+  // 維護日已過但還沒封存：先告訴 Owner 還能改到什麼時候
+  const deadline = (!locked && w.week_date < todayStr())
+    ? `<div class="mw-until">${esc(lockFrom(w))} 起封存，在那之前都還能修改</div>` : "";
+
+  const lockBar = locked ? `<div class="lockbar">${esc(lockNote)}</div>` : "";
+
+  const banner = `<div class="mw">
+    <div class="mw-top">
+      <span class="mw-date">${esc(fmtDate(w.week_date))}</span>
+      <span class="mw-time">${esc(fmtRange(w.start_time, w.end_time))}${w.start_time ? "（GMT+8）" : ""}</span>
+      <span class="mw-tags">${tags}</span>
+    </div>
+    ${deadline}
+    ${w.release_team ? `<div class="mw-team"><span class="lab">RELEASE TEAM</span><pre>${esc(w.release_team)}</pre></div>` : ""}
+  </div>${lockBar}`;
+
+  if(!list.length){
+    $("wkBody").innerHTML = banner + (locked
+      ? `<div class="empty"><b>這一週沒有留下任何項目</b></div>`
+      : `<div class="empty"><b>這一週還沒有任何項目</b>按右上「＋ 填寫維護項目」新增第一筆。</div>`);
+    return;
+  }
+
+  const body = list.map(t => `<tr>
+    <td class="c-sys">${esc(t.system)}</td>
+    <td class="c-own">${esc(t.owner || "—")}</td>
+    <td class="c-det${t.details === "無" ? " none" : ""}">${esc(t.details || "—")}${memo(t)}</td>
+    <td class="c-tim">${esc(fmtRange(t.start_time, t.end_time))}${dur(t)}</td>
+    <td class="c-st"><span class="st ${t.status}">${ST_TXT[t.status] || t.status}</span>
+        ${t.updated_by ? `<span class="by">${esc(t.updated_by)}</span>` : ""}</td>
+    <td class="c-act"><button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "補填" : "填寫"}</button></td>
+  </tr>`).join("");
+
+  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable">
+    <thead><tr><th class="c-sys">System</th><th class="c-own">Owner</th><th>更新項目</th>
+      <th class="c-tim">執行時間</th><th class="c-st">狀態</th><th class="c-act"></th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+}
+
+// 併進其他欄位的次要資訊
+const dur  = t => t.duration_min != null ? `<span class="by">${t.duration_min} 分</span>` : "";
+const memo = t => t.notes ? `<div class="c-memo"><b>備註　</b>${esc(t.notes)}</div>` : "";
+
+/* ---------- 1.3 / 1.4 各場地歷史紀錄 ---------- */
+const MAX_ROWS = 200;
+
+function mtPass(t, w){
+  const kw = $("qText").value.trim().toLowerCase();
+  const from = $("qFrom").value, to = $("qTo").value;
+  const sys = $("qSys").value, own = $("qOwn").value, st = $("qSt").value, dn = $("qDown").value;
+  const d = w ? w.week_date : "";
+  if(from && d < from) return false;
+  if(to   && d > to)   return false;
+  if(sys && t.system !== sys) return false;
+  if(own && !String(t.owner||"").toLowerCase().includes(own.toLowerCase())) return false;
+  if(st  && t.status !== st) return false;
+  if(dn  && String(w && w.downtime === true ? 1 : w && w.downtime === false ? 0 : "") !== dn) return false;
+  if(kw){
+    const hay = [t.system, t.owner, t.details, t.notes, t.updated_by, d].join(" ").toLowerCase();
+    if(!kw.split(/\s+/).every(word => hay.includes(word))) return false;
+  }
+  return true;
+}
+
+function renderSearch(){
+  if(!mtReady) return;
+  const v = venueOf(mtVenue) || {};
+  $("qTitle").textContent = v.history || `${mtVenue} 歷史紀錄`;
+
+  if(searchVenueShown !== mtVenue){
+    if(searchVenueShown) mtFilterBy[searchVenueShown] = readFilters();   // 收起前一個場地的條件
+    buildSearchOptions();                                                // 下拉換成這個場地的
+    writeFilters(mtFilterBy[mtVenue]);                                   // 套回這個場地自己的條件
+    searchVenueShown = mtVenue;
+  } else {
+    buildSearchOptions();
+  }
+
+  // 只在當前場地的資料裡找
+  const wmap = Object.fromEntries(winsOf(mtVenue).map(w => [w.id, w]));
+  const mine = mtTasks.filter(t => wmap[t.window_id]);
+  const hits = mine.map(t => [t, wmap[t.window_id]])
+                   .filter(([t,w]) => mtPass(t, w))
+                   .sort((a,b) => String(b[1].week_date).localeCompare(a[1].week_date)
+                               || (a[0].seq||0) - (b[0].seq||0));
+
+  $("qCount").textContent = `共 ${hits.length} 筆`;
+  $("qHint").textContent  = hits.length > MAX_ROWS
+    ? `（${esc(v.title || mtVenue)}共 ${mine.length} 筆，畫面只顯示最新 ${MAX_ROWS} 筆，請縮小查詢範圍）`
+    : (hits.length !== mine.length ? `（全部 ${mine.length} 筆，已套用查詢條件）` : "");
+
+  if(!hits.length){
+    $("qBody").innerHTML = mine.length
+      ? `<div class="empty"><b>查無符合條件的項目</b>試著換個關鍵字，或把系統、負責人改回「全部」。</div>`
+      : `<div class="empty"><b>${esc(v.title || mtVenue)}還沒有任何紀錄</b>先到排程頁建立第一週。</div>`;
+    return;
+  }
+
+  const body = hits.slice(0, MAX_ROWS).map(([t,w]) => `<tr>
+    <td class="c-wk"><a href="#/s/${esc(mtVenue)}/${esc(w.week_date)}">${esc(w.week_date)}</a>
+      ${w.downtime === true ? `<span class="by">停機</span>` : w.downtime === false ? `<span class="by">不停機</span>` : ""}</td>
+    <td class="c-sys">${esc(t.system)}</td>
+    <td class="c-own">${esc(t.owner || "—")}</td>
+    <td class="c-det${t.details === "無" ? " none" : ""}">${esc(t.details || "—")}${memo(t)}</td>
+    <td class="c-tim">${esc(fmtRange(t.start_time, t.end_time))}${dur(t)}</td>
+    <td class="c-st"><span class="st ${t.status}">${ST_TXT[t.status] || t.status}</span></td>
+  </tr>`).join("");
+
+  $("qBody").innerHTML = `<div class="tablewrap"><table class="mtable">
+    <thead><tr><th class="c-wk">維護日期</th><th class="c-sys">System</th><th class="c-own">Owner</th>
+      <th>更新項目</th><th class="c-tim">執行時間</th><th class="c-st">狀態</th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+}
+
+/* ---------- 共用編輯密碼 ----------
+   只是擋一下誤觸，不是資安機制（前端程式碼公開，密碼看得到）。
+   真要管控請改成登入才能填寫，做法見 schema_maintenance.sql 最後一段。 */
+let passResolve = null;
+function ensureCanEdit(){
+  const pw = MCFG.editPasscode;
+  if(!pw || sessionStorage.getItem("mtPass") === "ok" || session) return Promise.resolve(true);
+  $("psMsg").classList.add("hidden");
+  $("inPass").value = "";
+  $("passDlg").showModal();
+  return new Promise(res => { passResolve = res; });
+}
+$("passForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if($("inPass").value !== MCFG.editPasscode) return showMsg("psMsg", "密碼不正確。");
+  sessionStorage.setItem("mtPass", "ok");
+  $("passDlg").close();
+  if(passResolve){ passResolve(true); passResolve = null; }
+});
+$("passDlg").addEventListener("close", () => { if(passResolve){ passResolve(false); passResolve = null; } });
+
+/* ---------- 填寫維護項目 ---------- */
+function openTaskForm(rec){
+  const locked = isLocked(curWin());
+  mtEditing = rec ? rec.id : null;
+  $("tkTitle").textContent = !rec ? "新增維護項目" : locked ? "補填執行結果" : "填寫維護項目";
+  $("tkMsg").classList.add("hidden");
+  $("tkDel").classList.toggle("hidden", !(rec && session));   // 只有管理者刪得掉
+  $("inSys").value     = rec ? (rec.system || "") : "";
+  $("inOwn").value     = rec ? (rec.owner  || "") : "";
+  $("inDet").value     = rec ? (rec.details || "") : "";
+  $("inSt").value      = rec ? rec.status : "pending";
+  $("inTkStart").value = rec ? (hhmm(rec.start_time) || "") : "";
+  $("inTkEnd").value   = rec ? (hhmm(rec.end_time)   || "") : "";
+  $("inTkNote").value  = rec ? (rec.notes || "") : "";
+  $("inBy").value      = localStorage.getItem("mtWho") || "";  // 同一台裝置記住填寫人，省得每次重打
+
+  // 封存後只剩執行時間、狀態與備註可動，其餘欄位改成唯讀
+  ["inSys","inOwn","inDet"].forEach(id => {
+    $(id).disabled = locked;
+    $(id).closest(".fld").classList.toggle("ro", locked);
+  });
+  $("tkLock").classList.toggle("hidden", !locked);
+  $("tkLock").textContent = lockNote;
+
+  tkCalc();
+  $("taskDlg").showModal();
+}
+
+function tkCalc(){
+  const s = $("inTkStart").value, e = $("inTkEnd").value;
+  if(!s || !e) return void ($("tkCalc").textContent = "工時：—");
+  const [h1,m1] = s.split(":").map(Number), [h2,m2] = e.split(":").map(Number);
+  const mins = (h2*60+m2) - (h1*60+m1);
+  $("tkCalc").textContent = mins > 0 ? `工時：${mins} 分鐘` : "工時：結束時間需晚於開始時間";
+}
+["inTkStart","inTkEnd"].forEach(id => $(id).addEventListener("change", tkCalc));
+
+async function saveTask(){
+  const w = curWin();
+  if(!w) return showMsg("tkMsg", "請先建立這一週的維護視窗。");
+  const locked = isLocked(w);
+  if(locked && !mtEditing) return showMsg("tkMsg", "這一週已封存，不能再新增項目。");
+
+  // 驗證順序照著表單由上而下，錯誤訊息才會指到使用者先看到的欄位
+  if(!locked){
+    if(!$("inSys").value.trim()) return showMsg("tkMsg", "請填寫系統名稱。");
+    if(!$("inDet").value.trim()) return showMsg("tkMsg", "請填寫更新項目；本週沒有要更新就填「無」。");
+  }
+  const s = $("inTkStart").value, e = $("inTkEnd").value;
+  if(s && e && (Number(e.replace(":","")) <= Number(s.replace(":",""))))
+    return showMsg("tkMsg", "結束時間需晚於開始時間。");
+  const by = $("inBy").value.trim();
+  if(!by) return showMsg("tkMsg", "請填寫「填寫人」，這是修改紀錄的依據。");
+
+  // 封存後只送允許的欄位，連送都不送其他欄位，免得誤蓋掉歷史內容
+  const payload = locked ? {
+    status:     $("inSt").value,
+    start_time: s || null,
+    end_time:   e || null,
+    notes:      $("inTkNote").value.trim() || null,
+    updated_by: by,
+    duration_min: null                              // 交給資料庫的 trigger 依起訖重算
+  } : {
+    window_id:  w.id,
+    system:     $("inSys").value.trim(),
+    owner:      $("inOwn").value.trim() || null,
+    details:    $("inDet").value.trim(),
+    status:     $("inSt").value,
+    start_time: s || null,
+    end_time:   e || null,
+    notes:      $("inTkNote").value.trim() || null,
+    updated_by: by,
+    duration_min: null
+  };
+
+  if(!mtEditing){
+    const used = tasksOf(w.id).map(t => t.seq || 0);
+    payload.seq = (used.length ? Math.max(...used) : 0) + 1;
+  }
+
+  $("tkSubmit").disabled = true;
+  const q = mtEditing
+    ? sb.from("maintenance_tasks").update(payload).eq("id", mtEditing)
+    : sb.from("maintenance_tasks").insert(payload);
+  const {error} = await q;
+  $("tkSubmit").disabled = false;
+  if(error) return showMsg("tkMsg", "儲存失敗：" + error.message);
+
+  localStorage.setItem("mtWho", by);
+  $("taskDlg").close();
+  await loadMaint();
+}
+
+/* ---------- 建立新的一週 ---------- */
+// 只看當前場地的上一週，Cebu 與 Mexico 各自延續各自的節奏
+const defaultRowsOf = v => {
+  const d = MCFG.defaultRows;
+  return (Array.isArray(d) ? d : (d && d[v]) || []);       // 舊設定寫成陣列時也還讀得到
+};
+
+function openWinForm(){
+  $("wnMsg").classList.add("hidden");
+  const v = venueOf(mtVenue) || {};
+  const last = winsOf(mtVenue)[0];                // 已依日期遞減排序
+  $("wnTitle").textContent = `建立新的一週　${v.title || mtVenue}`;
+  // 沿用上一週往後推七天，沒有上一週就從今天開始
+  const base = last ? new Date(last.week_date) : new Date();
+  if(last) base.setDate(base.getDate() + 7);
+  $("inWDate").value  = `${base.getFullYear()}-${pad(base.getMonth()+1)}-${pad(base.getDate())}`;
+  $("inWStart").value = hhmm(last && last.start_time) || MCFG.defaultStart || "07:30";
+  $("inWEnd").value   = hhmm(last && last.end_time)   || MCFG.defaultEnd   || "09:00";
+  $("inWDown").value  = last && last.downtime === false ? "0" : "1";
+  $("inWNote").value  = "";
+  $("inWTeam").value  = (last && last.release_team) || "";
+  $("inWCopy").checked = true;
+  const n = last ? tasksOf(last.id).length : defaultRowsOf(mtVenue).length;
+  $("wnCopyTip").textContent = last
+    ? `會沿用 ${last.week_date} 的 ${n} 個系統與負責人，更新項目留空給各 Owner 自己填。`
+    : n ? `${v.title || mtVenue} 還沒有上一週可參考，會帶入 config.js 裡設定的 ${n} 個系統。`
+        : `${v.title || mtVenue} 還沒有上一週，config.js 也沒設定預設系統，建立後請逐列新增。`;
+  $("winDlg").showModal();
+}
+
+async function saveWindow(){
+  const v = mtVenue;
+  const d = $("inWDate").value;
+  if(!d) return showMsg("wnMsg", "請選擇維護日期。");
+  if(winOf(v, d)) return showMsg("wnMsg", `${d} 已經建立過了，請直接從上方週次選單切過去。`);
+
+  const down = $("inWDown").value === "1";
+  const note = $("inWNote").value.trim() || (down ? "停機維護" : "不停機維護");
+  $("wnSubmit").disabled = true;
+
+  const {data, error} = await sb.from("maintenance_windows").insert({
+    venue: v,
+    week_date: d,
+    start_time: $("inWStart").value || null,
+    end_time:   $("inWEnd").value   || null,
+    downtime:   down,
+    note,
+    release_team: $("inWTeam").value.trim() || null
+  }).select().single();
+
+  if(error){ $("wnSubmit").disabled = false; return showMsg("wnMsg", "建立失敗：" + error.message); }
+
+  if($("inWCopy").checked){
+    const last = winsOf(v)[0];
+    const src  = last ? tasksOf(last.id).map(t => ({ system: t.system, owner: t.owner }))
+                      : defaultRowsOf(v);
+    if(src.length){
+      const rows = src.map((r, i) => ({
+        window_id: data.id, seq: i + 1,
+        system: r.system, owner: r.owner || null,
+        details: "", status: "pending"
+      }));
+      const {error: e2} = await sb.from("maintenance_tasks").insert(rows);
+      if(e2){ $("wnSubmit").disabled = false; return showMsg("wnMsg", "系統清單帶入失敗：" + e2.message); }
+    }
+  }
+
+  $("wnSubmit").disabled = false;
+  $("winDlg").close();
+  mtWeekBy[v] = d;
+  await loadMaint();
+  renderWeek();
+}
+
+/* ---------- 事件 ---------- */
+$("wkBtn").addEventListener("click", e => { e.stopPropagation(); toggleCal(); });
+$("calPrev").addEventListener("click", () => { calMonth = shiftMonth(calMonth, -1); renderCal(); });
+$("calNext").addEventListener("click", () => { calMonth = shiftMonth(calMonth,  1); renderCal(); });
+$("calGrid").addEventListener("click", e => {
+  const b = e.target.closest("[data-cal]");
+  if(!b) return;
+  mtWeekBy[mtVenue] = b.dataset.cal;
+  toggleCal(false);
+  renderWeek();
+});
+// 點空白處或按 Esc 關掉月曆
+document.addEventListener("click", e => {
+  if(!$("wkCal").classList.contains("hidden") && !e.target.closest(".cal-wrap")) toggleCal(false);
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape") toggleCal(false); });
+
+$("wkPrev").addEventListener("click", () => stepWeek(1));    // 清單是遞減排序，往後一格＝更舊的一週
+$("wkNext").addEventListener("click", () => stepWeek(-1));
+$("wkLatest").addEventListener("click", () => { mtWeekBy[mtVenue] = defaultWeek(mtVenue); renderWeek(); });
+function stepWeek(delta){
+  const list = winsOf(mtVenue);
+  const i = list.findIndex(w => w.week_date === curWeek());
+  const j = i + delta;
+  if(i < 0 || j < 0 || j >= list.length) return;
+  mtWeekBy[mtVenue] = list[j].week_date;
+  renderWeek();
+}
+
+$("addTaskBtn").addEventListener("click", async () => {
+  const w = curWin();
+  if(!w) return alert("請先建立這一週的維護視窗。");
+  if(isLocked(w)) return alert("這一週已封存，不能再新增項目。\n\n既有項目仍可補填執行時間與狀態。");
+  if(await ensureCanEdit()) openTaskForm(null);
+});
+$("newWinBtn").addEventListener("click", async () => { if(await ensureCanEdit()) openWinForm(); });
+$("taskForm").addEventListener("submit", e => { e.preventDefault(); saveTask(); });
+$("winForm").addEventListener("submit", e => { e.preventDefault(); saveWindow(); });
+
+$("wkBody").addEventListener("click", async e => {
+  const b = e.target.closest("[data-tedit]");
+  if(!b) return;
+  const t = mtTasks.find(x => x.id === b.dataset.tedit);
+  if(t && await ensureCanEdit()) openTaskForm(t);
+});
+
+$("tkDel").addEventListener("click", async () => {
+  const t = mtTasks.find(x => x.id === mtEditing);
+  if(!t || !confirm(`確定刪除這一列？\n\n${t.system}`)) return;
+  const {error} = await sb.from("maintenance_tasks").delete().eq("id", t.id);
+  if(error) return showMsg("tkMsg", "刪除失敗：" + error.message);
+  $("taskDlg").close();
+  await loadMaint();
+});
+
+QF.forEach(id => $(id).addEventListener("change", onFilterChange));
+$("qText").addEventListener("input", onFilterChange);
+$("qClear").addEventListener("click", () => { writeFilters(null); onFilterChange(); });
+function onFilterChange(){
+  mtFilterBy[mtVenue] = readFilters();      // 邊改邊記，切走再切回來條件還在
+  renderSearch();
+}
 
 boot();
 </script>

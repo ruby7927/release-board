@@ -1,10 +1,73 @@
-# 每週更版公告板
+# 更版及維護公告
 
-現場人員**免帳號密碼**即可查看每週系統更版內容；管理者登入後才能新增、編輯、刪除。
+現場人員**免帳號密碼**即可查看；維護排程各 System Owner 也**免帳號**就能填寫。
 
 - 前端：單一 `index.html`（無框架、無建置步驟）
 - 後端：Supabase（PostgreSQL + Auth）
 - 部署：GitHub Pages
+
+## 分頁與權限
+
+**Maintenance Schedule 任何人都能填寫及查詢；其他分頁必須管理者登入才能新增。**
+所有分頁一律開放未登入查看。
+
+| 分頁 | 內容 | 查詢 | 新增／修改 | 刪除 |
+|---|---|---|---|---|
+| 1. 系統更版訊息（首頁） | 上正式系統的更版公告 | 任何人 | 管理者 | 管理者 |
+| 2.1 Cebu Maintenance Schedule | Cebu 每週維護視窗與任務明細 | 任何人 | **任何人** | 管理者 |
+| 2.2 Mexico Maintenance Schedule | Mexico 每週維護視窗與任務明細 | 任何人 | **任何人** | 管理者 |
+| 2.3 Cebu歷史紀錄 | Cebu 跨週查詢 | 任何人 | — | — |
+| 2.4 Mexico歷史紀錄 | Mexico 跨週查詢 | 任何人 | — | — |
+| 3. 操作手冊 | 各系統的文件連結 | 任何人 | 管理者 | 管理者 |
+| 4. 系統網址 | 各系統的網址 | 任何人 | 管理者 | 管理者 |
+
+權限由資料庫的 RLS 決定，前端只是配合隱藏按鈕，繞過畫面直接打 API 也一樣擋得住：
+
+| 資料表 | 查詢 | 新增 | 修改 | 刪除 |
+|---|---|---|---|---|
+| `maintenance_windows` | 任何人 | 任何人 | 任何人 | 管理者 |
+| `maintenance_tasks` | 任何人 | 任何人 | 任何人 | 管理者 |
+| `maintenance_log` | 任何人 | 只有 trigger 寫得進去 | — | — |
+| `release_notes` | 任何人 | 管理者 | 管理者 | 管理者 |
+| `manual_files` | 任何人 | 管理者 | 管理者 | 管理者 |
+
+維護排程另外受封存規則限制，見下一節。
+
+## 維護排程的封存規則
+
+**下一場維護開始，上一場才封存。** 例如 8/12 那場：
+
+| 期間 | 可以改什麼 |
+|---|---|
+| 8/12 當天及之前 | 全部欄位 |
+| 8/13 ～ 8/18 | 全部欄位（下一場 8/19 還沒開始） |
+| 8/19 起 | 只剩**執行時間**、**狀態**與**備註**；不能再新增或刪除列 |
+
+封存後仍開放的那三項，都是維護做完之後才會知道的資訊；
+系統、負責人、更新項目則固定下來，確保歷史紀錄不被改寫。
+
+封存日＝同場地下一場維護的日期；還沒排下一場的話，以維護日七天後為界。
+維護日已過但還沒封存的那幾天，畫面上會標示「X 月 X 日起封存」提醒 Owner。
+管理者登入後不受任何限制，方便更正。
+
+規則在前後端各實作一次：前端 `index.html` 的 `lockFrom` / `isLocked`（讓現場當下就看得出來），
+資料庫 `mw_lock_from` + `mt_guard_locked` / `mw_guard_locked` trigger（真正把關的一層）。
+
+> 沒排下一場時的七天預設值寫死在兩個地方：`index.html` 的 `LOCK_FALLBACK_DAYS`
+> 與 `schema_maintenance.sql` 的 `mw_lock_from`。要改的話兩邊都要改。
+
+## 免帳號填寫的風險與防護
+
+「免登入可寫」代表任何拿到網址的人都能寫，不只公司同仁。實際採取的防護：
+
+1. **匿名不能刪除** — 只能新增與修改，資料不會被清掉
+2. **每筆改動留紀錄** — 填寫時必填「填寫人」，配合 trigger 寫入 `maintenance_log`
+3. **過去的資料封存** — 見上一節
+4. **`config.js` 的 `editPasscode`** — 填字串即要求輸入共用密碼才能填寫（預設關閉）。
+   注意這只擋誤觸，不是資安機制，因為前端程式碼是公開的。
+
+真的要管控，改成「登入才能填寫」：把 `schema_maintenance.sql` 裡 `mt` / `mw` 的
+insert、update 政策中的 `anon` 拿掉，只留 `authenticated`，重新執行那四條 `create policy`。前端不用改。
 
 ---
 
@@ -13,8 +76,10 @@
 ### 1. 建立 Supabase 專案
 
 1. 到 <https://supabase.com> → **New project**
-2. 專案建好後進入 **SQL Editor**，貼上 `schema.sql` 整份內容執行一次
-   （建立 `release_notes` 表、索引、以及「匿名可讀、登入才可寫」的 RLS 政策）
+2. 專案建好後進入 **SQL Editor**，依序執行：
+   - `schema.sql` — 更版公告的 `release_notes` 表
+   - `schema_maintenance.sql` — 維護排程的三張表、封存 trigger、修改紀錄
+   - `seed_maintenance.sql` — 匯入 Excel 轉出的 93 週歷史資料（可重複執行）
 
 ### 2. 填入連線設定
 
@@ -57,8 +122,40 @@ GitHub repo → **Settings → Pages** → Source 選 `main` / `root` → Save�
 | 檔案 | 用途 |
 |---|---|
 | `index.html` | 全部畫面與邏輯（公開清單、查詢、登入、新增／編輯） |
-| `config.js` | Supabase 連線設定、場地清單、預設更版時間、分類建議 |
-| `schema.sql` | 資料表 + 索引 + RLS，於 SQL Editor 執行 |
+| `config.js` | Supabase 連線設定、維護場地、預設時段、分類建議、共用編輯密碼 |
+| `schema.sql` | 更版公告的資料表 + 索引 + RLS |
+| `schema_maintenance.sql` | 維護排程的資料表 + 封存 trigger + 修改紀錄 + RLS |
+| `seed_maintenance.sql` | Excel 轉出的 93 週歷史資料，可重複執行 |
+
+## 維護排程的資料欄位
+
+`maintenance_windows`（一週一筆）
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `venue` | text | 場地代碼，對應 `config.js` 的 `maintenance.venues` |
+| `week_date` | date | 維護日期，等同原本 Excel 的分頁名稱 |
+| `start_time` / `end_time` | time | 維護時段（GMT+8） |
+| `downtime` | boolean | true=停機維護、false=不停機維護、null=未註明 |
+| `note` | text | 補充，例如「地震_停機維護」 |
+| `release_team` | text | 本週各系統負責人名單 |
+
+`maintenance_tasks`（一個視窗底下 N 筆）
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `window_id` / `seq` | uuid / int | 所屬視窗與顯示順序 |
+| `system` / `owner` | text | 系統與負責人 |
+| `details` | text | 更新項目，一行一項；沒有就填「無」 |
+| `start_time` / `end_time` | time | 實際執行時間 |
+| `duration_min` | int | 工時，有起訖時由 trigger 自動算 |
+| `status` | text | `pending` 待執行、`done` 完成、`na` 無更新項目 |
+| `updated_by` | text | 最後填寫人，免登入填寫的追溯依據 |
+
+## 新增一個維護場地
+
+改 `config.js` 的 `maintenance.venues` 加一筆 `{ code, title, history }`，
+再到 `defaultRows` 加上該場地的預設系統清單即可，不用動程式也不用改資料表。
 
 ## 資料欄位
 

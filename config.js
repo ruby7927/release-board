@@ -19,7 +19,45 @@ window.APP_CONFIG = {
   // 系統分類建議清單；表單仍可自行輸入新的分類
   categoryHints: ["荷官排班系統", "請假系統", "採購系統", "Incident Reporting System"],
 
-  // ---- 側邊分頁 2. 操作手冊 ----
+  // ---- 側邊分頁 1. Maintenance Schedule（首頁）----
+  maintenance: {
+    // 每個場地會產生兩個分頁：排程與歷史紀錄。
+    // 順序就是選單順序，第一個是打開網站的預設頁。
+    venues: [
+      { code: "CB", title: "Cebu Maintenance Schedule",   history: "Cebu歷史紀錄" },
+      { code: "MX", title: "Mexico Maintenance Schedule", history: "Mexico歷史紀錄" }
+    ],
+
+    // 每週維護視窗的預設時段（建立新的一週時帶入）
+    defaultStart: "07:30",
+    defaultEnd:   "09:00",
+
+    // 建立某場地的第一週時，用這份清單開場。
+    // 之後每週都會自動沿用該場地上一週的系統與 Owner，不會再用到這份。
+    defaultRows: {
+      CB: [
+        { system: "Cebu Studio(IT)",  owner: "Zet"     },
+        { system: "Cebu Studio(OP)",  owner: "Emanuel" },
+        { system: "Streaming",        owner: "Bernard" },
+        { system: "LCS",              owner: "Tony"    },
+        { system: "辨識系統五合一",     owner: "Rossi"   },
+        { system: "DS System",        owner: "Fanny"   },
+        { system: "Proxy server",     owner: "Fanny"   },
+        { system: "賭具更換",          owner: "Michelle" },
+        { system: "翻譯系統",          owner: "Gary"    }
+      ],
+      // Mexico 已匯入 2026-08-12 那一週，之後都會沿用上一週，用不到這份預設清單。
+      // 未來新增其他場地時，照 CB 的格式在這裡補一份即可。
+      MX: []
+    },
+
+    // 共用編輯密碼：填了字串就會要求輸入才能填寫，留 null 代表不設限。
+    // 注意這只是擋一下誤觸，不是真的資安防護（前端程式碼是公開的）。
+    // 真的要管控請改用「登入才能填寫」，做法見 schema_maintenance.sql 最後一段。
+    editPasscode: null
+  },
+
+  // ---- 側邊分頁 3. 操作手冊 ----
   // 每一筆會變成一個分頁；url 是該系統的 Google 雲端資料夾（可留空）
   // 分享設定記得設為「知道連結的任何人」，現場才開得起來
   manuals: [
@@ -28,7 +66,7 @@ window.APP_CONFIG = {
     { name: "請假系統",                  url: "https://drive.google.com/drive/folders/1PMcD-UastGpJHLeyLjMS9rCzRPhdgDY8?usp=sharing" }
   ],
 
-  // ---- 側邊分頁 3. 系統網址 ----
+  // ---- 側邊分頁 4. 系統網址 ----
   // 每個系統一個分頁，登入後可自行新增「網址名稱 + 場地 + 網址」
   links: [
     { name: "荷官排班系統" },
