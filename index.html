@@ -193,6 +193,9 @@
   .tag.week{background:var(--grp-soft);color:var(--grp);font-family:var(--mono)}
   /* 維護日已過但還沒封存，提醒還能改到哪一天 */
   .mw-until{margin-top:10px;font-size:12.5px;color:var(--soon)}
+  /* 編輯這一週：擺在標籤右邊，平常低調，滑過才明顯 */
+  .mw-edit{flex:none;color:var(--ink-faint);border-color:var(--line)}
+  .mw-edit:hover{border-color:var(--accent);color:var(--accent)}
   .mw-team{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
   .mw-team .lab{font-size:11.5px;letter-spacing:.14em;color:var(--ink-faint);display:block;margin-bottom:5px}
   .mw-team pre{margin:0;font-family:var(--sans);font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.75}
@@ -247,7 +250,9 @@
   .mtable .c-tim{width:118px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
   .mtable .c-st {width:106px}   /* 容得下最長的狀態「無更新項目」 */
   .mtable .c-act{width:98px;text-align:right}
+  .mtable.can-del .c-act{width:150px}          /* 管理者登入後多一顆刪除鈕 */
   .mtable .c-act button{white-space:nowrap;padding:4px 8px}
+  .mtable .c-act .acts{display:inline-flex;gap:5px;justify-content:flex-end}
   /* 併進主欄位的次要資訊：工時、填寫人 */
   .mtable .by{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:3px}
   /* 備註接在更新項目底下，用虛線分隔 */
@@ -262,6 +267,7 @@
     .mtable .c-sys{width:16%}
     .mtable .c-tim{width:104px}
     .mtable .c-act{width:88px}
+    .mtable.can-del .c-act{width:136px}
   }
   .st{display:inline-block;font-size:11.5px;padding:3px 10px;border-radius:999px;font-weight:600;white-space:nowrap}
   .st.done{background:var(--done-soft);color:var(--done)}
@@ -752,7 +758,7 @@
         <textarea id="inWTeam" style="min-height:110px" placeholder="LCS : Tony&#10;Streaming : Bernard"></textarea>
         <div class="tip">本週各系統負責人名單，會顯示在公告區。預設沿用上一週。</div>
       </div>
-      <div class="fld">
+      <div class="fld" id="rowWCopy">
         <label><input type="checkbox" id="inWCopy" checked style="width:auto;margin-right:6px">
           帶入上一週的系統與負責人清單</label>
         <div class="tip" id="wnCopyTip"></div>
@@ -1554,11 +1560,16 @@ function renderWeek(){
 
   const lockBar = locked ? `<div class="lockbar">${esc(lockNote)}</div>` : "";
 
+  // 封存後這一週的時段、停機與否、Release Team 都不給匿名改，按鈕就不顯示
+  const editBtn = locked ? ""
+    : `<button type="button" class="btn-ghost btn-sm mw-edit" id="editWinBtn">編輯這一週</button>`;
+
   const banner = `<div class="mw">
     <div class="mw-top">
       <span class="mw-date">${esc(fmtDate(w.week_date))}</span>
       <span class="mw-time">${esc(fmtRange(w.start_time, w.end_time))}${w.start_time ? "（GMT+8）" : ""}</span>
       <span class="mw-tags">${tags}</span>
+      ${editBtn}
     </div>
     ${deadline}
     ${w.release_team ? `<div class="mw-team"><span class="lab">RELEASE TEAM</span><pre>${esc(w.release_team)}</pre></div>` : ""}
@@ -1578,10 +1589,14 @@ function renderWeek(){
     <td class="c-tim">${esc(fmtRange(t.start_time, t.end_time))}${dur(t)}</td>
     <td class="c-st"><span class="st ${t.status}">${ST_TXT[t.status] || t.status}</span>
         ${t.updated_by ? `<span class="by">${esc(t.updated_by)}</span>` : ""}</td>
-    <td class="c-act"><button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "補填" : "填寫"}</button></td>
+    <td class="c-act"><span class="acts">
+      <button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "補填" : "填寫"}</button>
+      ${session ? `<button type="button" class="btn-danger btn-sm" data-tdel="${esc(t.id)}">刪除</button>` : ""}
+    </span></td>
   </tr>`).join("");
 
-  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable">
+  // 登入後多一顆刪除鈕，動作欄要跟著加寬
+  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable${session ? " can-del" : ""}">
     <thead><tr><th class="c-sys">System</th><th class="c-own">Owner</th><th>更新項目</th>
       <th class="c-tim">執行時間</th><th class="c-st">狀態</th><th class="c-act"></th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
@@ -1694,8 +1709,13 @@ function openTaskForm(rec){
   $("inOwn").value     = rec ? (rec.owner  || "") : "";
   $("inDet").value     = rec ? (rec.details || "") : "";
   $("inSt").value      = rec ? rec.status : "pending";
-  $("inTkStart").value = rec ? (hhmm(rec.start_time) || "") : "";
-  $("inTkEnd").value   = rec ? (hhmm(rec.end_time)   || "") : "";
+  // 開始時間沒填過就帶這一週維護時段的開始時間（早期幾週沒記時段，才退回設定值）；
+  // 結束時間留空，做完才知道
+  const win = curWin();
+  $("inTkStart").value = (rec && hhmm(rec.start_time))
+                      || hhmm(win && win.start_time)
+                      || MCFG.defaultTaskStart || "08:00";
+  $("inTkEnd").value   = rec ? (hhmm(rec.end_time) || "") : "";
   $("inTkNote").value  = rec ? (rec.notes || "") : "";
   $("inBy").value      = localStorage.getItem("mtWho") || "";  // 同一台裝置記住填寫人，省得每次重打
 
@@ -1783,26 +1803,49 @@ const defaultRowsOf = v => {
   return (Array.isArray(d) ? d : (d && d[v]) || []);       // 舊設定寫成陣列時也還讀得到
 };
 
-function openWinForm(){
+let mtEditWin = null;          // 有值＝正在編輯既有的一週，null＝建立新的一週
+
+/* rec 傳入既有視窗＝編輯模式；不傳＝建立新的一週。 */
+function openWinForm(rec){
+  mtEditWin = rec ? rec.id : null;
   $("wnMsg").classList.add("hidden");
   const v = venueOf(mtVenue) || {};
   const last = winsOf(mtVenue)[0];                // 已依日期遞減排序
-  $("wnTitle").textContent = `建立新的一週　${v.title || mtVenue}`;
-  // 沿用上一週往後推七天，沒有上一週就從今天開始
-  const base = last ? new Date(last.week_date) : new Date();
-  if(last) base.setDate(base.getDate() + 7);
-  $("inWDate").value  = `${base.getFullYear()}-${pad(base.getMonth()+1)}-${pad(base.getDate())}`;
-  $("inWStart").value = hhmm(last && last.start_time) || MCFG.defaultStart || "07:30";
-  $("inWEnd").value   = hhmm(last && last.end_time)   || MCFG.defaultEnd   || "09:00";
-  $("inWDown").value  = last && last.downtime === false ? "0" : "1";
-  $("inWNote").value  = "";
-  $("inWTeam").value  = (last && last.release_team) || "";
-  $("inWCopy").checked = true;
-  const n = last ? tasksOf(last.id).length : defaultRowsOf(mtVenue).length;
-  $("wnCopyTip").textContent = last
-    ? `會沿用 ${last.week_date} 的 ${n} 個系統與負責人，更新項目留空給各 Owner 自己填。`
-    : n ? `${v.title || mtVenue} 還沒有上一週可參考，會帶入 config.js 裡設定的 ${n} 個系統。`
-        : `${v.title || mtVenue} 還沒有上一週，config.js 也沒設定預設系統，建立後請逐列新增。`;
+
+  if(rec){
+    $("wnTitle").textContent = `編輯這一週　${rec.week_date}`;
+    $("inWDate").value  = rec.week_date;
+    $("inWStart").value = hhmm(rec.start_time) || "";
+    $("inWEnd").value   = hhmm(rec.end_time)   || "";
+    $("inWDown").value  = rec.downtime === false ? "0" : "1";
+    // 沒特別註記時 note 就等於停機與否，別把它當補充說明顯示
+    $("inWNote").value  = (rec.note && !/^不?停機維護$/.test(rec.note)) ? rec.note : "";
+    $("inWTeam").value  = rec.release_team || "";
+    $("wnSubmit").textContent = "儲存";
+  } else {
+    $("wnTitle").textContent = `建立新的一週　${v.title || mtVenue}`;
+    // 沿用上一週往後推七天，沒有上一週就從今天開始
+    const base = last ? new Date(last.week_date) : new Date();
+    if(last) base.setDate(base.getDate() + 7);
+    $("inWDate").value  = `${base.getFullYear()}-${pad(base.getMonth()+1)}-${pad(base.getDate())}`;
+    $("inWStart").value = hhmm(last && last.start_time) || MCFG.defaultStart || "07:30";
+    $("inWEnd").value   = hhmm(last && last.end_time)   || MCFG.defaultEnd   || "09:00";
+    $("inWDown").value  = last && last.downtime === false ? "0" : "1";
+    $("inWNote").value  = "";
+    $("inWTeam").value  = (last && last.release_team) || "";
+    $("wnSubmit").textContent = "建立";
+  }
+
+  // 「帶入上一週清單」只在建立新的一週時才有意義
+  $("rowWCopy").classList.toggle("hidden", !!rec);
+  $("inWCopy").checked = !rec;
+  if(!rec){
+    const n = last ? tasksOf(last.id).length : defaultRowsOf(mtVenue).length;
+    $("wnCopyTip").textContent = last
+      ? `會沿用 ${last.week_date} 的 ${n} 個系統與負責人，更新項目留空給各 Owner 自己填。`
+      : n ? `${v.title || mtVenue} 還沒有上一週可參考，會帶入 config.js 裡設定的 ${n} 個系統。`
+          : `${v.title || mtVenue} 還沒有上一週，config.js 也沒設定預設系統，建立後請逐列新增。`;
+  }
   $("winDlg").showModal();
 }
 
@@ -1810,21 +1853,42 @@ async function saveWindow(){
   const v = mtVenue;
   const d = $("inWDate").value;
   if(!d) return showMsg("wnMsg", "請選擇維護日期。");
-  if(winOf(v, d)) return showMsg("wnMsg", `${d} 已經建立過了，請直接從上方週次選單切過去。`);
+  // 改日期時，撞到的若是自己就不算重複
+  const clash = winOf(v, d);
+  if(clash && clash.id !== mtEditWin)
+    return showMsg("wnMsg", `${d} 已經建立過了，請直接從上方週次選單切過去。`);
+  const st = $("inWStart").value, en = $("inWEnd").value;
+  if(st && en && Number(en.replace(":", "")) <= Number(st.replace(":", "")))
+    return showMsg("wnMsg", "結束時間需晚於開始時間。");
 
   const down = $("inWDown").value === "1";
   const note = $("inWNote").value.trim() || (down ? "停機維護" : "不停機維護");
-  $("wnSubmit").disabled = true;
-
-  const {data, error} = await sb.from("maintenance_windows").insert({
+  const payload = {
     venue: v,
     week_date: d,
-    start_time: $("inWStart").value || null,
-    end_time:   $("inWEnd").value   || null,
+    start_time: st || null,
+    end_time:   en || null,
     downtime:   down,
     note,
     release_team: $("inWTeam").value.trim() || null
-  }).select().single();
+  };
+  $("wnSubmit").disabled = true;
+
+  // ---- 編輯既有的一週 ----
+  if(mtEditWin){
+    const {error} = await sb.from("maintenance_windows").update(payload).eq("id", mtEditWin);
+    $("wnSubmit").disabled = false;
+    if(error) return showMsg("wnMsg", "儲存失敗：" + error.message);
+    $("winDlg").close();
+    mtWeekBy[v] = d;                        // 日期改掉時要跟著切過去
+    mtEditWin = null;
+    await loadMaint();
+    renderWeek();
+    return;
+  }
+
+  // ---- 建立新的一週 ----
+  const {data, error} = await sb.from("maintenance_windows").insert(payload).select().single();
 
   if(error){ $("wnSubmit").disabled = false; return showMsg("wnMsg", "建立失敗：" + error.message); }
 
@@ -1885,24 +1949,42 @@ $("addTaskBtn").addEventListener("click", async () => {
   if(isLocked(w)) return alert("這一週已封存，不能再新增項目。\n\n既有項目仍可補填執行時間與狀態。");
   if(await ensureCanEdit()) openTaskForm(null);
 });
-$("newWinBtn").addEventListener("click", async () => { if(await ensureCanEdit()) openWinForm(); });
+$("newWinBtn").addEventListener("click", async () => { if(await ensureCanEdit()) openWinForm(null); });
 $("taskForm").addEventListener("submit", e => { e.preventDefault(); saveTask(); });
 $("winForm").addEventListener("submit", e => { e.preventDefault(); saveWindow(); });
 
 $("wkBody").addEventListener("click", async e => {
-  const b = e.target.closest("[data-tedit]");
-  if(!b) return;
-  const t = mtTasks.find(x => x.id === b.dataset.tedit);
-  if(t && await ensureCanEdit()) openTaskForm(t);
+  // 「編輯這一週」是跟著橫幅重畫的，用事件委派才綁得到
+  if(e.target.closest("#editWinBtn")){
+    const w = curWin();
+    if(w && await ensureCanEdit()) openWinForm(w);
+    return;
+  }
+  const ed = e.target.closest("[data-tedit]"), dl = e.target.closest("[data-tdel]");
+  if(ed){
+    const t = mtTasks.find(x => x.id === ed.dataset.tedit);
+    if(t && await ensureCanEdit()) openTaskForm(t);
+  }
+  if(dl){
+    const t = mtTasks.find(x => x.id === dl.dataset.tdel);
+    if(t) await delTask(t);
+  }
 });
+
+/* 刪除只有管理者做得到（RLS 也只放行 authenticated）。
+   刪掉的內容不會消失——trigger 會把整列存進 maintenance_log。 */
+async function delTask(t){
+  const what = [t.system, t.owner].filter(Boolean).join("　");
+  if(!confirm(`確定刪除這一列？\n\n${what}\n\n刪除後會留在修改紀錄裡，但畫面上不會再出現。`)) return;
+  const {error} = await sb.from("maintenance_tasks").delete().eq("id", t.id);
+  if(error) return alert("刪除失敗：" + error.message);
+  if($("taskDlg").open) $("taskDlg").close();
+  await loadMaint();
+}
 
 $("tkDel").addEventListener("click", async () => {
   const t = mtTasks.find(x => x.id === mtEditing);
-  if(!t || !confirm(`確定刪除這一列？\n\n${t.system}`)) return;
-  const {error} = await sb.from("maintenance_tasks").delete().eq("id", t.id);
-  if(error) return showMsg("tkMsg", "刪除失敗：" + error.message);
-  $("taskDlg").close();
-  await loadMaint();
+  if(t) await delTask(t);
 });
 
 QF.forEach(id => $(id).addEventListener("change", onFilterChange));
