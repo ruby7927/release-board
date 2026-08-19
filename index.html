@@ -766,6 +766,8 @@
       <div class="msg err hidden" id="wnMsg"></div>
     </div>
     <div class="d-foot">
+      <button type="button" class="btn-danger hidden" id="wnDel">刪除這一週</button>
+      <span style="flex:1"></span>
       <button type="button" class="btn-ghost" data-close="winDlg">取消</button>
       <button type="submit" class="btn-primary" id="wnSubmit">建立</button>
     </div>
@@ -1839,6 +1841,8 @@ function openWinForm(rec){
   // 「帶入上一週清單」只在建立新的一週時才有意義
   $("rowWCopy").classList.toggle("hidden", !!rec);
   $("inWCopy").checked = !rec;
+  // 刪整週會連底下的任務一起清掉，只給管理者
+  $("wnDel").classList.toggle("hidden", !(rec && session));
   if(!rec){
     const n = last ? tasksOf(last.id).length : defaultRowsOf(mtVenue).length;
     $("wnCopyTip").textContent = last
@@ -1985,6 +1989,40 @@ async function delTask(t){
 $("tkDel").addEventListener("click", async () => {
   const t = mtTasks.find(x => x.id === mtEditing);
   if(t) await delTask(t);
+});
+
+/* 刪整週。資料表設了 on delete cascade，刪掉視窗底下的任務會跟著消失，
+   所以確認訊息一定要講清楚會連帶刪掉幾筆。
+   刻意先刪任務再刪視窗：cascade 觸發寫紀錄時視窗已經不在，
+   maintenance_log 的場地與維護日期會變成空的，事後就查不出刪的是哪一週。 */
+$("wnDel").addEventListener("click", async () => {
+  const w = mtWindows.find(x => x.id === mtEditWin);
+  if(!w) return;
+  const n = tasksOf(w.id).length;
+  const v = venueOf(w.venue) || {};
+
+  if(!confirm(
+      `確定刪除 ${w.week_date} 這一整週？\n\n` +
+      `場地：${v.title || w.venue}\n` +
+      `底下的 ${n} 筆維護項目會一起刪掉。\n\n` +
+      `刪除後會留在修改紀錄裡，但畫面上不會再出現。`)) return;
+  if(n > 0 && !confirm(`再確認一次：這 ${n} 筆維護項目確定要一起刪除？`)) return;
+
+  $("wnDel").disabled = true;
+  // 先刪任務（此時視窗還在，紀錄才寫得到場地與日期），再刪視窗
+  if(n > 0){
+    const {error: e1} = await sb.from("maintenance_tasks").delete().eq("window_id", w.id);
+    if(e1){ $("wnDel").disabled = false; return showMsg("wnMsg", "刪除維護項目失敗：" + e1.message); }
+  }
+  const {error} = await sb.from("maintenance_windows").delete().eq("id", w.id);
+  $("wnDel").disabled = false;
+  if(error) return showMsg("wnMsg", "刪除失敗：" + error.message);
+
+  $("winDlg").close();
+  mtEditWin = null;
+  mtWeekBy[w.venue] = null;          // 這一週沒了，讓它重新挑一週來顯示
+  await loadMaint();
+  renderWeek();
 });
 
 QF.forEach(id => $(id).addEventListener("change", onFilterChange));
