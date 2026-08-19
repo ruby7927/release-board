@@ -699,7 +699,8 @@
           <input type="time" id="inTkStart" aria-label="開始時間">
           <input type="time" id="inTkEnd" aria-label="結束時間">
         </div>
-        <div class="tip">GMT+8。做完再回來補即可，工時會自動算。</div>
+        <div class="tip">GMT+8。做完再回來補即可，工時會自動算。<br>
+          填了結束時間就代表做完了，狀態會自動改成「完成」。</div>
       </div>
       <div class="fld"><div class="calc" id="tkCalc">工時：—</div></div>
 
@@ -1741,6 +1742,13 @@ function tkCalc(){
   $("tkCalc").textContent = mins > 0 ? `工時：${mins} 分鐘` : "工時：結束時間需晚於開始時間";
 }
 ["inTkStart","inTkEnd"].forEach(id => $(id).addEventListener("change", tkCalc));
+
+/* 填了結束時間＝這項做完了，狀態直接帶成「完成」，省一個步驟。
+   只在使用者自己動結束時間時才跳，不會在開啟表單時偷改既有資料；
+   帶完仍可自己改回別的狀態。 */
+$("inTkEnd").addEventListener("change", () => {
+  if($("inTkEnd").value) $("inSt").value = "done";
+});
 
 async function saveTask(){
   const w = curWin();
