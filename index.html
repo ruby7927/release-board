@@ -1108,13 +1108,18 @@ function sanitize(html){
     const fs = FS_BY_NUM[el.getAttribute("size")];
     if(fs) el.style.fontSize = fs;
   });
-  root.querySelectorAll("*").forEach(el => {                    // 屬性全清，只留背景色、文字色與字級
+  root.querySelectorAll("*").forEach(el => {
     const bg = el.style.backgroundColor, fg = el.style.color, fs = el.style.fontSize;
+    const bold = /^(bold|[6-9]00)$/.test(el.style.fontWeight);   // 有些瀏覽器把粗體、底線
+    const uline = /underline/.test(el.style.textDecoration       // 存成 CSS 而非 <b>/<u>，
+                              || el.style.textDecorationLine || ""); // 這裡一併收下
     [...el.attributes].forEach(a => el.removeAttribute(a.name));
     const keep = [];
     if(bg) keep.push("background-color:" + bg);
     if(fg) keep.push("color:" + fg);
     if(fs && OK_FS.has(fs)) keep.push("font-size:" + fs);       // 只收白名單字級，避免塞進誇張的尺寸
+    if(bold)  keep.push("font-weight:700");
+    if(uline) keep.push("text-decoration:underline");
     if(keep.length) el.setAttribute("style", keep.join(";"));
   });
   return root.innerHTML;
@@ -1229,7 +1234,10 @@ document.querySelector(".etool").addEventListener("click", e => {
   const b = e.target.closest("button");
   if(!b) return;
   $("inContent").focus();
-  document.execCommand("styleWithCSS", false, true);
+  // 粗體、底線要關掉 styleWithCSS，瀏覽器才會產生 <b>/<u> 標籤；
+  // 開著的話會變成 <span style="font-weight:bold">，存檔淨化時樣式會被清掉。
+  // 顏色與字級則相反，要開著才存得成 CSS。
+  document.execCommand("styleWithCSS", false, !b.dataset.cmd);
   if(b.dataset.cmd)       document.execCommand(b.dataset.cmd, false, null);
   else if(b.dataset.hl)   document.execCommand("hiliteColor", false, b.dataset.hl);
   else if(b.dataset.fc)   document.execCommand("foreColor",   false, b.dataset.fc);
