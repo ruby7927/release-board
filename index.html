@@ -921,6 +921,7 @@ function boot(){
 
   buildNav();
   buildVenueInputs();
+  showOAuthError();
   window.addEventListener("hashchange", route);
 }
 
@@ -1335,6 +1336,18 @@ async function saveForm(){
 /* ---------- 登入牆 ----------
    未登入、或登入了但不在名單內，就只顯示登入畫面，
    內容區整個藏起來，資料也不去讀（讀了也會被 RLS 擋，只是徒增錯誤訊息）。 */
+/* Google 導回來若帶著錯誤，把它顯示出來。
+   Supabase 會依情況放在 query（?error=…）或 hash（#error=…），兩邊都看。 */
+function showOAuthError(){
+  const q = new URLSearchParams(location.search);
+  const f = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const err = q.get("error") || f.get("error");
+  if(!err) return;
+  const desc = q.get("error_description") || f.get("error_description") || "";
+  showMsg("gateMsg", `登入沒有完成：${decodeURIComponent(desc).replace(/\+/g, " ") || err}`);
+  console.warn("OAuth 回傳錯誤：", err, desc);
+}
+
 function applyGate(){
   const pass = isStaff();
   $("gate").classList.toggle("hidden", pass);
