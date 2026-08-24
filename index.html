@@ -871,22 +871,13 @@ let sb = null, rows = [], session = null, editingId = null, lastSig = null;
 /* 三層權限。真正把關的是資料庫的 RLS（is_admin / is_staff），
    這裡只是讓畫面提早反映，改這裡不會讓人多拿到任何權限。
    ★ 這份名單要跟 migration_google_login.sql 裡的 is_staff() 一致 ★ */
-const ADMIN_EMAILS = ["ruby.hsieh@united-link.com.tw"];
-const STAFF_EMAILS = [
-  "tony@united-link.com.tw",
-  "bernard@united-link.com.tw",
-  "fanny@united-link.com.tw",
-  "gary@united-link.com.tw",
-  "rossi@united-link.com.tw",
-  "zet@united-link.com.tw",
-  "emanuel@united-link.com.tw",
-  "michelle@united-link.com.tw",
-  "neroal@united-link.com.tw",
-  "zach@united-link.com.tw"
-];
-const emailOf = () => session ? String(session.user.email || "").toLowerCase() : "";
-const isAdmin = () => ADMIN_EMAILS.includes(emailOf());
-const isStaff = () => isAdmin() || STAFF_EMAILS.includes(emailOf());
+const ADMIN_EMAILS   = ["ruby.hsieh@united-link.com.tw"];
+const STAFF_DOMAINS  = ["north.com.tw", "united-link.com.tw"];   // 這兩個網域的人一律放行
+const STAFF_EXTRA    = ["tony.kuo@neutec.com.tw"];               // 網域外的例外，逐一列
+const emailOf  = () => session ? String(session.user.email || "").toLowerCase() : "";
+const domainOf = () => emailOf().split("@")[1] || "";
+const isAdmin  = () => ADMIN_EMAILS.includes(emailOf());
+const isStaff  = () => isAdmin() || STAFF_DOMAINS.includes(domainOf()) || STAFF_EXTRA.includes(emailOf());
 
 
 /* ---------- 日期工具（一律當作本地時間，不做時區轉換） ---------- */
@@ -1002,9 +993,11 @@ const secByKey = k => SECTIONS.find(s => s.key === k);
    沒有任何一筆設定的人＝看得到全部（多數人不必逐一設定）。
    這裡只負責選單顯示；真正擋資料的是 manual_files 的 RLS。 */
 let myPages = null;                       // null = 尚未載入；Set = 被指定的分頁
+const PAGE_NOTES = "notes";               // 1. 系統更版訊息
+const PAGE_MAINT = "maint";               // 2. Maintenance Schedule（含填寫）
 const pageKeyOf = (sec, name) => `${sec.title}|${name}`;
-const canViewPage = (sec, name) =>
-  isAdmin() || !myPages || myPages.size === 0 || myPages.has(pageKeyOf(sec, name));
+const canViewKey  = key => isAdmin() || !myPages || myPages.size === 0 || myPages.has(key);
+const canViewPage = (sec, name) => canViewKey(pageKeyOf(sec, name));
 
 async function loadPageAccess(){
   const {data, error} = await sb.from("page_access").select("page_key");
@@ -1017,21 +1010,26 @@ const FOLDER_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
 const linkTo = (sec, name) => `#/d/${sec.key}/${encodeURIComponent(name)}`;
 
 function buildNav(){
+  // 編號一律依「實際看得到的分頁」重排，沒權限的人才不會看到 1、3 這種跳號
+  let no = 0;
+
   // snav-top：沒有子項目的頂層分頁，字重比照分區標題
-  const notes = `<a class="snav-item snav-top" href="#/"><b>1.</b>系統更版訊息</a>`;
+  const notes = canViewKey(PAGE_NOTES)
+    ? `<a class="snav-item snav-top" href="#/"><b>${++no}.</b>系統更版訊息</a>` : "";
 
-  // 2. Maintenance Schedule：先列各場地的排程，再列各場地的歷史紀錄
-  let n = 0;
-  const schedules = MVENUES.map(v =>
-    `<a class="snav-item snav-sub" href="#/s/${esc(v.code)}"><b>2.${++n}</b>${esc(v.title)}</a>`).join("");
-  const histories = MVENUES.map(v =>
-    `<a class="snav-item snav-sub" href="#/h/${esc(v.code)}"><b>2.${++n}</b>${esc(v.history || v.code + " 歷史紀錄")}</a>`).join("");
+  // Maintenance Schedule：先列各場地的排程，再列各場地的歷史紀錄
+  let maint = "";
+  if(canViewKey(PAGE_MAINT)){
+    const mNo = ++no;
+    let n = 0;
+    const schedules = MVENUES.map(v =>
+      `<a class="snav-item snav-sub" href="#/s/${esc(v.code)}"><b>${mNo}.${++n}</b>${esc(v.title)}</a>`).join("");
+    const histories = MVENUES.map(v =>
+      `<a class="snav-item snav-sub" href="#/h/${esc(v.code)}"><b>${mNo}.${++n}</b>${esc(v.history || v.code + " 歷史紀錄")}</a>`).join("");
+    maint = `<div class="snav-sec"><b>${mNo}.</b>Maintenance Schedule</div>` + schedules + histories;
+  }
 
-  const maint = `<div class="snav-sec"><b>2.</b>Maintenance Schedule</div>` + schedules + histories;
-
-  // 3. 之後的分區依權限逐一過濾；整區都看不到就連標題一起省略，
-  //    編號也跟著重排，才不會出現 1、2、4 這種跳號。
-  let no = 2;
+  // 其餘分區依權限逐一過濾；整區都看不到就連標題一起省略
   const docs = SECTIONS.map(sec => {
     const items = sec.items.filter(m => canViewPage(sec, m.name));
     if(!items.length) return "";
@@ -1132,16 +1130,29 @@ function route(){
 
   const s = h.match(/^\/s\/([A-Za-z]+)(?:\/(\d{4}-\d{2}-\d{2}))?$/);
   const hi = h.match(/^\/h\/([A-Za-z]+)$/);
-  const sVenue = s  && venueOf(s[1])  ? s[1]  : null;
-  const hVenue = hi && venueOf(hi[1]) ? hi[1] : null;
+  const maintOK = canViewKey(PAGE_MAINT);
+  const sVenue = s  && venueOf(s[1])  && maintOK ? s[1]  : null;
+  const hVenue = hi && venueOf(hi[1]) && maintOK ? hi[1] : null;
 
-  const view = sys ? "doc"
-             : hVenue ? "search"
-             : sVenue ? "week"
-             : "home";                       // 其餘（含 #/、#/notes、空的 hash）都是首頁
+  let view = sys ? "doc"
+           : hVenue ? "search"
+           : sVenue ? "week"
+           : "home";                         // 其餘（含 #/、#/notes、空的 hash）都是首頁
 
-  if(view === "week")   mtVenue = sVenue;
-  if(view === "search") mtVenue = hVenue;
+  // 沒權限看首頁的人（例如只被指派維護排程），落到第一個看得到的分頁，
+  // 否則打開網站會是一片空白。
+  if(view === "home" && !canViewKey(PAGE_NOTES)) view = maintOK ? "week" : "doc";
+  if(view === "week" && !sVenue)   mtVenue = HOME_VENUE;
+  if(view === "doc" && !sys){                // 首頁與維護都沒權限時，退到第一個看得到的系統分頁
+    for(const sc of SECTIONS){
+      const hit = sc.items.find(x => canViewPage(sc, x.name));
+      if(hit){ curSec = sc; curSystem = hit.name; break; }
+    }
+    if(!curSystem) view = "home";            // 真的什麼都沒有，維持首頁（會是空的）
+  }
+
+  if(view === "week"   && sVenue) mtVenue = sVenue;
+  if(view === "search" && hVenue) mtVenue = hVenue;
 
   $("viewHome").classList.toggle("hidden",   view !== "home");
   $("viewManual").classList.toggle("hidden", view !== "doc");
@@ -1149,7 +1160,7 @@ function route(){
   $("viewSearch").classList.toggle("hidden", view !== "search");
   $("addFileBtn").classList.toggle("hidden", !(curSystem && isAdmin()));
 
-  const here = view === "doc"    ? linkTo(curSec, curSystem)
+  const here = view === "doc"    ? (curSec ? linkTo(curSec, curSystem) : "")
              : view === "week"   ? `#/s/${mtVenue}`
              : view === "search" ? `#/h/${mtVenue}`
              : "#/";
@@ -1349,12 +1360,9 @@ $("gateGoogle").addEventListener("click", async () => {
   $("gateGoogle").disabled = true;
   const {error} = await sb.auth.signInWithOAuth({
     provider: "google",
-    options: {
-      redirectTo: location.origin + location.pathname,
-      // hd 只是讓 Google 的選擇畫面預設帶出公司網域，省得選到個人 Gmail；
-      // 真正把關的仍是 is_staff() 白名單。
-      queryParams: { hd: "united-link.com.tw" }
-    } });
+    // 不指定 hd：允許的帳號跨多個網域（north / united-link，加上網域外的例外），
+    // 綁定單一網域會讓其他網域的人選不到自己的帳號。
+    options: { redirectTo: location.origin + location.pathname } });
   if(error){ $("gateGoogle").disabled = false; showMsg("gateMsg", "Google 登入失敗：" + error.message); }
 });
 $("gateAdmin").addEventListener("click", () => {
