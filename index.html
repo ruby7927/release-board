@@ -302,6 +302,22 @@
     .mw-tags{margin-left:0;width:100%}
   }
 
+
+  /* ---------------- 登入牆 ---------------- */
+  /* 未登入時整個站只剩這一塊；資料也不會去讀，免得跳一堆權限錯誤 */
+  .gate{max-width:460px;margin:8vh auto 0;background:var(--surface);
+    border:1px solid var(--line);border-top:3px solid var(--accent);
+    border-radius:var(--r);box-shadow:0 10px 40px -20px rgba(0,0,0,.35);padding:34px 32px}
+  .gate h2{margin:0 0 8px;font-size:19px;letter-spacing:.02em}
+  .gate p{margin:0 0 22px;font-size:14px;color:var(--ink-soft);line-height:1.75}
+  .gate .gbtn{margin-bottom:14px}
+  .gate .adminlink{display:block;width:100%;text-align:center;background:transparent;
+    border:none;color:var(--ink-faint);font-size:12.5px;text-decoration:underline;padding:6px}
+  .gate .adminlink:hover{color:var(--accent)}
+  .gate .who{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-faint);
+    margin-bottom:14px;word-break:break-all}
+  .gate .msg{margin-top:0;margin-bottom:18px}
+
   /* ---------------- 對話框 ---------------- */
   dialog{border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 28px));box-shadow:0 20px 60px -20px rgba(0,0,0,.45)}
   dialog::backdrop{background:rgba(12,18,16,.55)}
@@ -339,12 +355,26 @@
   .ebody{min-height:130px;max-height:300px;overflow-y:auto;padding:10px 12px;font-size:14px;line-height:1.8;outline:none}
   .ebody:empty::before{content:attr(data-ph);color:var(--ink-faint)}
   .ebody u{text-underline-offset:2px}
+  /* Google 登入按鈕：白底、灰框，照 Google 的品牌規範 */
+  .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    padding:11px 14px;background:var(--surface);border:1px solid var(--line-strong);
+    color:var(--ink);font-size:14.5px;font-weight:600}
+  .gbtn:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .gbtn svg{flex:none}
+  .gbtn:disabled{opacity:.5}
+  .orline{display:flex;align-items:center;gap:10px;margin:16px 0 14px;
+    color:var(--ink-faint);font-size:12px}
+  .orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--line)}
+
   .msg{font-size:13px;padding:9px 11px;border-radius:var(--r);margin-top:12px}
   .msg.err{background:var(--danger-soft);color:var(--danger)}
 
   .setup{background:var(--soon-soft);border:1px solid var(--soon-line);border-radius:var(--r);padding:16px 18px;margin-bottom:18px;font-size:14px}
   .setup b{color:var(--soon)}
   .setup code{font-family:var(--mono);font-size:12.5px;background:var(--surface);padding:1px 5px;border-radius:2px;border:1px solid var(--line)}
+  /* 登入了但不在白名單 */
+  .setup.notedit{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .setup.notestaff{background:var(--soon-soft);border-color:var(--soon-line);color:var(--soon)}
 
   @media (max-width:640px){
     .f,.f.dates{min-width:100%}
@@ -369,6 +399,25 @@
   </div>
 </header>
 
+
+<!-- 登入牆：未登入或不在名單內時，整個站只顯示這一塊 -->
+<section id="gate" class="gate hidden">
+  <h2 id="gateTitle">請先登入</h2>
+  <p id="gateText"></p>
+  <div class="msg err hidden" id="gateMsg"></div>
+  <button type="button" class="gbtn" id="gateGoogle">
+    <svg viewBox="0 0 18 18" width="17" height="17" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+      <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/>
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+    </svg>
+    <span id="gateGoogleText">使用公司 Google 帳號登入</span>
+  </button>
+  <button type="button" class="adminlink" id="gateAdmin">我是管理者，用 Email 與密碼登入</button>
+  <button type="button" class="adminlink hidden" id="gateOut">換一個帳號登入</button>
+</section>
+
 <div class="shell">
 
 <aside class="side">
@@ -382,6 +431,9 @@
     <b>尚未完成設定</b><br>
     請開啟 <code>config.js</code>，填入 Supabase 的 Project URL 與 anon key，並在 SQL Editor 執行 <code>schema.sql</code>。
   </div>
+
+  <!-- 登入了但不在白名單內：先講清楚，免得按下儲存才看到資料庫的錯誤 -->
+  <div class="setup notedit hidden" id="notEditor"></div>
 
   <section id="viewHome">
 
@@ -523,8 +575,18 @@
   <form method="dialog" id="loginForm">
     <div class="d-head"><h3>管理者登入</h3><button type="button" class="x" data-close="loginDlg" aria-label="關閉">×</button></div>
     <div class="d-body">
-      <div class="fld"><label for="liEmail">Email</label><input type="email" id="liEmail" autocomplete="username" required></div>
-      <div class="fld"><label for="liPw">密碼</label><input type="password" id="liPw" autocomplete="current-password" required></div>
+      <button type="button" class="gbtn" id="liGoogle">
+        <svg viewBox="0 0 18 18" width="17" height="17" aria-hidden="true">
+          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/>
+          <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+        </svg>
+        使用公司 Google 帳號登入
+      </button>
+      <div class="orline"><span>或用 Email 與密碼</span></div>
+      <div class="fld"><label for="liEmail">Email</label><input type="email" id="liEmail" autocomplete="username"></div>
+      <div class="fld"><label for="liPw">密碼</label><input type="password" id="liPw" autocomplete="current-password"></div>
       <div class="msg err hidden" id="liMsg"></div>
     </div>
     <div class="d-foot">
@@ -806,6 +868,27 @@ const WD     = ["日","一","二","三","四","五","六"];
 
 let sb = null, rows = [], session = null, editingId = null, lastSig = null;
 
+/* 三層權限。真正把關的是資料庫的 RLS（is_admin / is_staff），
+   這裡只是讓畫面提早反映，改這裡不會讓人多拿到任何權限。
+   ★ 這份名單要跟 migration_google_login.sql 裡的 is_staff() 一致 ★ */
+const ADMIN_EMAILS = ["ruby.hsieh@united-link.com.tw"];
+const STAFF_EMAILS = [
+  "tony@united-link.com.tw",
+  "bernard@united-link.com.tw",
+  "fanny@united-link.com.tw",
+  "gary@united-link.com.tw",
+  "rossi@united-link.com.tw",
+  "zet@united-link.com.tw",
+  "emanuel@united-link.com.tw",
+  "michelle@united-link.com.tw",
+  "neroal@united-link.com.tw",
+  "zach@united-link.com.tw"
+];
+const emailOf = () => session ? String(session.user.email || "").toLowerCase() : "";
+const isAdmin = () => ADMIN_EMAILS.includes(emailOf());
+const isStaff = () => isAdmin() || STAFF_EMAILS.includes(emailOf());
+
+
 /* ---------- 日期工具（一律當作本地時間，不做時區轉換） ---------- */
 const pad = n => String(n).padStart(2,"0");
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
@@ -834,26 +917,47 @@ function boot(){
   }
   sb = supabase.createClient(c.url, c.anonKey);
 
-  sb.auth.onAuthStateChange((_e, s) => { session = s; applyAuthUI(); render(); route(); });
-  sb.auth.getSession().then(({data}) => { session = data.session; applyAuthUI(); route(); });
+  sb.auth.onAuthStateChange((_e, s) => {
+    session = s;
+    if(!s){ loaded = false; myPages = null; }   // 換帳號時要重讀權限，不能沿用上一個人的
+    applyAuthUI();
+    if(isStaff()) loadAll();
+  });
+  sb.auth.getSession().then(({data}) => {
+    session = data.session; applyAuthUI();
+    if(isStaff()) loadAll();
+  });
 
   buildNav();
   buildVenueInputs();
   window.addEventListener("hashchange", route);
+}
+
+/* 資料一律等通過登入牆才讀；未登入時讀了也只會被 RLS 擋下來 */
+let loaded = false;
+async function loadAll(){
+  if(loaded) return;
+  loaded = true;
+  await loadPageAccess();   // 先知道這個帳號看得到哪些分頁，再決定選單與路由
+  buildNav();
   route();
-  load();
-  loadFiles();
-  loadMaint();
+  load(); loadFiles(); loadMaint();
 }
 
 function applyAuthUI(){
-  const on = !!session;
-  $("newBtn").classList.toggle("hidden", !on);
-  $("logoutBtn").classList.toggle("hidden", !on);
-  $("loginBtn").classList.toggle("hidden", on);
+  if(applyGate()) return;   // 沒通過登入牆就不用管其他按鈕了
+  // 分兩件事：有沒有登入（決定登入／登出鈕），
+  // 以及是不是白名單內的管理者（決定看不看得到編輯功能）。
+  // 混在一起的話，非白名單的人登入後會連「登出」都看不到，卡住出不來。
+  const signedIn = !!session;
+  const admin    = isAdmin();
+  warnIfNotEditor();
+  $("newBtn").classList.toggle("hidden", !admin);
+  $("logoutBtn").classList.toggle("hidden", !signedIn);
+  $("loginBtn").classList.toggle("hidden", signedIn);
   const who = $("who");
-  who.classList.toggle("hidden", !on);
-  who.textContent = on ? session.user.email : "";
+  who.classList.toggle("hidden", !signedIn);
+  who.textContent = signedIn ? session.user.email : "";
 }
 
 /* ---------- 讀取資料 ---------- */
@@ -893,6 +997,21 @@ const HOME_VENUE = MVENUES[0].code;
 const venueOf = code => MVENUES.find(v => v.code === code);
 const secByKey = k => SECTIONS.find(s => s.key === k);
 
+/* ---------- 分頁權限 ----------
+   對應表在資料庫的 page_access，格式「分區|系統名稱」。
+   沒有任何一筆設定的人＝看得到全部（多數人不必逐一設定）。
+   這裡只負責選單顯示；真正擋資料的是 manual_files 的 RLS。 */
+let myPages = null;                       // null = 尚未載入；Set = 被指定的分頁
+const pageKeyOf = (sec, name) => `${sec.title}|${name}`;
+const canViewPage = (sec, name) =>
+  isAdmin() || !myPages || myPages.size === 0 || myPages.has(pageKeyOf(sec, name));
+
+async function loadPageAccess(){
+  const {data, error} = await sb.from("page_access").select("page_key");
+  if(error){ console.warn("page_access 讀取失敗：", error.message); myPages = new Set(); return; }
+  myPages = new Set((data || []).map(r => r.page_key));
+}
+
 const FOLDER_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`;
 const linkTo = (sec, name) => `#/d/${sec.key}/${encodeURIComponent(name)}`;
@@ -910,12 +1029,20 @@ function buildNav(){
 
   const maint = `<div class="snav-sec"><b>2.</b>Maintenance Schedule</div>` + schedules + histories;
 
-  $("navSections").innerHTML = notes + maint + SECTIONS.map(sec =>
-    `<div class="snav-sec"><b>${sec.no}.</b>${esc(sec.title)}</div>` +
-    sec.items.map((m, i) =>
-      `<a class="snav-item snav-sub" href="${linkTo(sec, m.name)}"><b>${sec.no}.${i+1}</b>${esc(m.name)}</a>`
-    ).join("")
-  ).join("");
+  // 3. 之後的分區依權限逐一過濾；整區都看不到就連標題一起省略，
+  //    編號也跟著重排，才不會出現 1、2、4 這種跳號。
+  let no = 2;
+  const docs = SECTIONS.map(sec => {
+    const items = sec.items.filter(m => canViewPage(sec, m.name));
+    if(!items.length) return "";
+    no++;
+    return `<div class="snav-sec"><b>${no}.</b>${esc(sec.title)}</div>` +
+      items.map((m, i) =>
+        `<a class="snav-item snav-sub" href="${linkTo(sec, m.name)}"><b>${no}.${i+1}</b>${esc(m.name)}</a>`
+      ).join("");
+  }).join("");
+
+  $("navSections").innerHTML = notes + maint + docs;
 }
 
 /* ---------- 分頁內容 ---------- */
@@ -961,11 +1088,11 @@ function renderDoc(){
   const rows = files.filter(f => f.system === system && names.includes(f.section || "操作手冊"));
   if(!rows.length){
     const what = sec.kind === "link" ? "網址" : "檔案";
-    $("mBody").innerHTML = `<div class="empty"><b>目前沒有${what}</b>${session ? `按右上「＋ 新增${what}」加入第一筆。` : "管理者登入後即可新增。"}</div>`;
+    $("mBody").innerHTML = `<div class="empty"><b>目前沒有${what}</b>${isAdmin() ? `按右上「＋ 新增${what}」加入第一筆。` : "管理者登入後即可新增。"}</div>`;
     return;
   }
 
-  const acts = f => session ? `<td><span class="facts">
+  const acts = f => isAdmin() ? `<td><span class="facts">
         <button type="button" class="btn-ghost btn-sm" data-fedit="${esc(f.id)}">編輯</button>
         <button type="button" class="btn-danger btn-sm" data-fdel="${esc(f.id)}">刪除</button></span></td>` : "";
   const mod = f => `<td><span class="fmod">${esc(relTime(f.modified_at))}${isRecent(f.modified_at)?'<span class="fnew">近期更新</span>':""}</span></td>`;
@@ -998,7 +1125,8 @@ function route(){
   const h = decodeURIComponent(location.hash.replace(/^#/, ""));
   const m = h.match(/^\/d\/([a-z]+)\/(.+)$/);
   const sec = m ? secByKey(m[1]) : null;
-  const sys = (sec && sec.items.some(x => x.name === m[2])) ? m[2] : null;
+  // 沒有權限的分頁，直接當成不存在，退回首頁；避免有人把網址貼給沒權限的人
+  const sys = (sec && sec.items.some(x => x.name === m[2]) && canViewPage(sec, m[2])) ? m[2] : null;
   curSec = sys ? sec : null;
   curSystem = sys;
 
@@ -1019,7 +1147,7 @@ function route(){
   $("viewManual").classList.toggle("hidden", view !== "doc");
   $("viewWeek").classList.toggle("hidden",   view !== "week");
   $("viewSearch").classList.toggle("hidden", view !== "search");
-  $("addFileBtn").classList.toggle("hidden", !(curSystem && session));
+  $("addFileBtn").classList.toggle("hidden", !(curSystem && isAdmin()));
 
   const here = view === "doc"    ? linkTo(curSec, curSystem)
              : view === "week"   ? `#/s/${mtVenue}`
@@ -1134,7 +1262,7 @@ function card(r, isSoon){
         ? `<ul class="c-body">${lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`
         : `<p class="c-plain">${esc(lines[0]||"")}</p>`;
   const link   = r.link_url ? `<a class="c-link" href="${esc(r.link_url)}" target="_blank" rel="noopener">相關連結 →</a>` : "";
-  const acts   = session ? `<span class="acts">
+  const acts   = isAdmin() ? `<span class="acts">
         <button type="button" class="btn-ghost btn-sm" data-edit="${esc(r.id)}">編輯</button>
         <button type="button" class="btn-danger btn-sm" data-del="${esc(r.id)}">刪除</button></span>` : "";
   return `<article class="card ${isSoon?"is-soon":"is-done"}">
@@ -1192,6 +1320,43 @@ async function saveForm(){
   await load();
 }
 
+
+/* ---------- 登入牆 ----------
+   未登入、或登入了但不在名單內，就只顯示登入畫面，
+   內容區整個藏起來，資料也不去讀（讀了也會被 RLS 擋，只是徒增錯誤訊息）。 */
+function applyGate(){
+  const pass = isStaff();
+  $("gate").classList.toggle("hidden", pass);
+  document.querySelector(".shell").classList.toggle("hidden", !pass);
+  $("gateOut").classList.toggle("hidden", !session);
+  $("gateGoogle").classList.toggle("hidden", !!session);
+  $("gateAdmin").classList.toggle("hidden", !!session);
+  if(pass) return false;
+
+  if(!session){
+    $("gateTitle").textContent = "請先登入";
+    $("gateText").textContent  = "這個網站需要登入才能使用。請用公司的 Google 帳號登入；"
+      + "如果登不進去，代表你的帳號還沒被加入名單，請找管理者。";
+  } else {
+    $("gateTitle").textContent = "這個帳號沒有權限";
+    $("gateText").textContent  = session.user.email
+      + " 不在允許的名單內，看不到任何內容。請改用已加入名單的公司帳號登入，或找管理者把你加進去。";
+  }
+  return true;
+}
+
+$("gateGoogle").addEventListener("click", async () => {
+  $("gateGoogle").disabled = true;
+  const {error} = await sb.auth.signInWithOAuth({
+    provider: "google", options: { redirectTo: location.origin + location.pathname } });
+  if(error){ $("gateGoogle").disabled = false; showMsg("gateMsg", "Google 登入失敗：" + error.message); }
+});
+$("gateAdmin").addEventListener("click", () => {
+  $("liMsg").classList.add("hidden");
+  $("loginDlg").showModal();
+});
+$("gateOut").addEventListener("click", () => sb.auth.signOut());
+
 function showMsg(id, text){
   const el = $(id); el.textContent = text; el.classList.remove("hidden");
 }
@@ -1211,13 +1376,43 @@ document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click
 
 $("loginForm").addEventListener("submit", async e => {
   e.preventDefault();
+  const email = $("liEmail").value.trim(), pw = $("liPw").value;
+  if(!email || !pw) return showMsg("liMsg", "請填入 Email 與密碼，或改用上方的 Google 登入。");
   $("liSubmit").disabled = true;
-  const {error} = await sb.auth.signInWithPassword({ email: $("liEmail").value.trim(), password: $("liPw").value });
+  const {error} = await sb.auth.signInWithPassword({ email, password: pw });
   $("liSubmit").disabled = false;
   if(error){ return showMsg("liMsg", "登入失敗：" + error.message); }
   $("liPw").value = "";
   $("loginDlg").close();
 });
+
+/* Google 登入。會離開本頁到 Google 挑帳號，回來時網址帶著 token，
+   supabase-js 自己會換成 session，所以這裡不用處理回來之後的事。
+   redirectTo 指回目前這一頁，才不會跳到別的地方。 */
+$("liGoogle").addEventListener("click", async () => {
+  $("liGoogle").disabled = true;
+  const {error} = await sb.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: location.origin + location.pathname }
+  });
+  if(error){
+    $("liGoogle").disabled = false;
+    showMsg("liMsg", "Google 登入失敗：" + error.message);
+  }
+});
+
+/* 白名單之外的帳號也登得進 Google，但寫任何東西都會被資料庫擋下。
+   與其讓人按了儲存才看到看不懂的錯誤，登入當下就講清楚。 */
+function warnIfNotEditor(){
+  // 走到這裡代表已通過登入牆，所以只剩「是同仁但不是管理者」要說明
+  const box = $("notEditor");
+  if(!box) return;
+  const staffOnly = isStaff() && !isAdmin();
+  box.className = "setup notestaff" + (staffOnly ? "" : " hidden");
+  if(staffOnly) box.textContent =
+    `${session.user.email} 可以填寫維護排程，但不能發布更版公告、` +
+    `管理操作手冊與系統網址，也不能刪除資料。`;
+}
 
 /* 每分鐘重算一次狀態：時間跨過某筆的上線時刻時，該筆自動從「即將更版」移到「已更版」。
    只有在分組結果真的改變時才重畫，避免每分鐘打斷現場的捲動位置。 */
@@ -1428,7 +1623,7 @@ function lockFrom(w){
   return later.length ? later[later.length - 1].week_date       // winsOf 遞減排序，最後一個＝最接近的下一場
                       : plusDays(w.week_date, LOCK_FALLBACK_DAYS);
 }
-const isLocked = w => !session && !!w && todayStr() >= lockFrom(w);
+const isLocked = w => !isAdmin() && !!w && todayStr() >= lockFrom(w);
 const lockNote = `已封存：下一場維護已經開始，這一週的系統、負責人與更新項目都不能再改，` +
                  `只剩「執行時間」「狀態」與「備註」可以補填。需要更正請用管理者帳號登入。`;
 
@@ -1602,12 +1797,12 @@ function renderWeek(){
         ${t.updated_by ? `<span class="by">${esc(t.updated_by)}</span>` : ""}</td>
     <td class="c-act"><span class="acts">
       <button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "補填" : "填寫"}</button>
-      ${session ? `<button type="button" class="btn-danger btn-sm" data-tdel="${esc(t.id)}">刪除</button>` : ""}
+      ${isAdmin() ? `<button type="button" class="btn-danger btn-sm" data-tdel="${esc(t.id)}">刪除</button>` : ""}
     </span></td>
   </tr>`).join("");
 
   // 登入後多一顆刪除鈕，動作欄要跟著加寬
-  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable${session ? " can-del" : ""}">
+  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable${isAdmin() ? " can-del" : ""}">
     <thead><tr><th class="c-sys">System</th><th class="c-own">Owner</th><th>更新項目</th>
       <th class="c-tim">執行時間</th><th class="c-st">狀態</th><th class="c-act"></th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
@@ -1693,8 +1888,14 @@ function renderSearch(){
    真要管控請改成登入才能填寫，做法見 schema_maintenance.sql 最後一段。 */
 let passResolve = null;
 function ensureCanEdit(){
+  // 改成登入才能填之後，沒登入就先請他登入
+  if(!isStaff()){
+    $("liMsg").classList.add("hidden");
+    $("loginDlg").showModal();
+    return Promise.resolve(false);
+  }
   const pw = MCFG.editPasscode;
-  if(!pw || sessionStorage.getItem("mtPass") === "ok" || session) return Promise.resolve(true);
+  if(!pw || sessionStorage.getItem("mtPass") === "ok" || isStaff()) return Promise.resolve(true);
   $("psMsg").classList.add("hidden");
   $("inPass").value = "";
   $("passDlg").showModal();
@@ -1715,7 +1916,7 @@ function openTaskForm(rec){
   mtEditing = rec ? rec.id : null;
   $("tkTitle").textContent = !rec ? "新增維護項目" : locked ? "補填執行結果" : "填寫維護項目";
   $("tkMsg").classList.add("hidden");
-  $("tkDel").classList.toggle("hidden", !(rec && session));   // 只有管理者刪得掉
+  $("tkDel").classList.toggle("hidden", !(rec && isAdmin()));   // 只有管理者刪得掉
   $("inSys").value     = rec ? (rec.system || "") : "";
   $("inOwn").value     = rec ? (rec.owner  || "") : "";
   $("inDet").value     = rec ? (rec.details || "") : "";
@@ -1728,7 +1929,9 @@ function openTaskForm(rec){
                       || MCFG.defaultTaskStart || "08:00";
   $("inTkEnd").value   = rec ? (hhmm(rec.end_time) || "") : "";
   $("inTkNote").value  = rec ? (rec.notes || "") : "";
-  $("inBy").value      = localStorage.getItem("mtWho") || "";  // 同一台裝置記住填寫人，省得每次重打
+  // 改成要登入之後，填寫人一律以帳號為準，不讓人自己打（資料庫也會再蓋一次）
+  $("inBy").value    = emailOf().split("@")[0];
+  $("inBy").readOnly = true;
 
   // 封存後只剩執行時間、狀態與備註可動，其餘欄位改成唯讀
   ["inSys","inOwn","inDet"].forEach(id => {
@@ -1858,7 +2061,7 @@ function openWinForm(rec){
   $("rowWCopy").classList.toggle("hidden", !!rec);
   $("inWCopy").checked = !rec;
   // 刪整週會連底下的任務一起清掉，只給管理者
-  $("wnDel").classList.toggle("hidden", !(rec && session));
+  $("wnDel").classList.toggle("hidden", !(rec && isAdmin()));
   if(!rec){
     const n = last ? tasksOf(last.id).length : defaultRowsOf(mtVenue).length;
     $("wnCopyTip").textContent = last
