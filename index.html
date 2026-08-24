@@ -1348,7 +1348,13 @@ function applyGate(){
 $("gateGoogle").addEventListener("click", async () => {
   $("gateGoogle").disabled = true;
   const {error} = await sb.auth.signInWithOAuth({
-    provider: "google", options: { redirectTo: location.origin + location.pathname } });
+    provider: "google",
+    options: {
+      redirectTo: location.origin + location.pathname,
+      // hd 只是讓 Google 的選擇畫面預設帶出公司網域，省得選到個人 Gmail；
+      // 真正把關的仍是 is_staff() 白名單。
+      queryParams: { hd: "united-link.com.tw" }
+    } });
   if(error){ $("gateGoogle").disabled = false; showMsg("gateMsg", "Google 登入失敗：" + error.message); }
 });
 $("gateAdmin").addEventListener("click", () => {
