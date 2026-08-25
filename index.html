@@ -873,7 +873,10 @@ let sb = null, rows = [], session = null, editingId = null, lastSig = null;
    ★ 這份名單要跟 migration_google_login.sql 裡的 is_staff() 一致 ★ */
 const ADMIN_EMAILS   = ["ruby.hsieh@united-link.com.tw"];
 const STAFF_DOMAINS  = ["north.com.tw", "united-link.com.tw"];   // 這兩個網域的人一律放行
-const STAFF_EXTRA    = ["tony.kuo@neutec.com.tw"];               // 網域外的例外，逐一列
+const STAFF_EXTRA    = [                                         // 網域外的例外，逐一列
+  "tony.kuo@neutec.com.tw",
+  "rubyruby790101@gmail.com"
+];
 const emailOf  = () => session ? String(session.user.email || "").toLowerCase() : "";
 const domainOf = () => emailOf().split("@")[1] || "";
 const isAdmin  = () => ADMIN_EMAILS.includes(emailOf());
