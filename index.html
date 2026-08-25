@@ -746,8 +746,8 @@
       </div>
 
       <div class="fld">
-        <label for="inDet">更新項目<span class="req">*</span></label>
-        <textarea id="inDet" placeholder="一項一行，例：&#10;1. 百家樂新增注區&#10;2. 移除 EROU 73 桌" required></textarea>
+        <label for="inDet">更新項目</label>
+        <textarea id="inDet" placeholder="一項一行，例：&#10;1. 百家樂新增注區&#10;2. 移除 EROU 73 桌"></textarea>
         <div class="tip">本週沒有要更新就填「無」，狀態選「無更新項目」。</div>
       </div>
 
@@ -2057,7 +2057,7 @@ async function saveTask(){
   // 驗證順序照著表單由上而下，錯誤訊息才會指到使用者先看到的欄位
   if(!locked){
     if(!$("inSys").value.trim()) return showMsg("tkMsg", "請填寫系統名稱。");
-    if(!$("inDet").value.trim()) return showMsg("tkMsg", "請填寫更新項目；本週沒有要更新就填「無」。");
+    // 更新項目非必填：有時填寫當下還不知道要更新什麼，留空即可事後補
   }
   const s = $("inTkStart").value, e = $("inTkEnd").value;
   if(s && e && (Number(e.replace(":","")) <= Number(s.replace(":",""))))
@@ -2076,7 +2076,7 @@ async function saveTask(){
     window_id:  w.id,
     system:     $("inSys").value.trim(),
     owner:      $("inOwn").value.trim() || null,
-    details:    $("inDet").value.trim(),
+    details:    $("inDet").value.trim() || null,
     status:     $("inSt").value,
     start_time: s || null,
     end_time:   e || null,
