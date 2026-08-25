@@ -528,7 +528,9 @@
 
   <!-- 1.3 / 1.4 各場地歷史紀錄 -->
   <section id="viewSearch" class="hidden">
-    <div class="mhead"><h2 id="qTitle"></h2></div>
+    <div class="mhead"><h2 id="qTitle"></h2>
+      <button class="btn-ghost" id="qExport">匯出 Excel</button>
+    </div>
     <section class="filters">
       <div class="flabel">查詢條件</div>
       <div class="frow">
@@ -1844,6 +1846,50 @@ function renderWeek(){
 }
 
 // 併進其他欄位的次要資訊
+/* ---------- 匯出 Excel ----------
+   輸出加上 BOM 的 UTF-8 CSV，Excel 直接開啟不會變亂碼。
+   匯出的是「查詢條件下的全部資料」，不受畫面只顯示最新 N 筆的限制。 */
+const CSV_COLS = [
+  ["維護日期",  ([t,w]) => w.week_date],
+  ["場地",      ()      => mtVenue],
+  ["停機",      ([t,w]) => w.downtime === true ? "停機" : w.downtime === false ? "不停機" : ""],
+  ["System",    ([t])   => t.system || ""],
+  ["Owner",     ([t])   => t.owner || ""],
+  ["更新項目",  ([t])   => t.details || ""],
+  ["開始時間",  ([t])   => hhmm(t.start_time) || ""],
+  ["結束時間",  ([t])   => hhmm(t.end_time) || ""],
+  ["工時(分)",  ([t])   => t.duration_min != null ? String(t.duration_min) : ""],
+  ["狀態",      ([t])   => ST_TXT[t.status] || t.status || ""],
+  ["填寫人",    ([t])   => t.updated_by || ""],
+  ["備註",      ([t])   => t.notes || ""]
+];
+
+// 以 = + - @ 開頭的字串，Excel 會當成公式，前面補上單引號避免誤判
+const CRLF = "\r\n";                        // CSV 慣用的換行，Excel 相容性最好
+const csvCell = v => {
+  const s = String(v ?? "");
+  const safe = /^[=+\-@]/.test(s) ? "'" + s : s;
+  return `"${safe.replace(/"/g, '""')}"`;
+};
+
+function exportSearch(){
+  const {hits} = searchHits();
+  if(!hits.length) return;
+  const rows = [CSV_COLS.map(c => c[0]).join(",")]
+    .concat(hits.map(pair => CSV_COLS.map(c => csvCell(c[1](pair))).join(",")));
+  const v = venueOf(mtVenue) || {};
+  const name = `${(v.history || mtVenue + "歷史紀錄").replace(/[\\/:*?"<>|]/g, "")}_${todayStr()}.csv`;
+  // 開頭補上 UTF-8 BOM（U+FEFF），少了它 Excel 會把中文開成亂碼
+  const blob = new Blob([String.fromCharCode(0xFEFF) + rows.join(CRLF)], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 const dur  = t => t.duration_min != null ? `<span class="by">${t.duration_min} 分</span>` : "";
 const memo = t => t.notes ? `<div class="c-memo"><b>備註　</b>${esc(t.notes)}</div>` : "";
 
@@ -1868,6 +1914,18 @@ function mtPass(t, w){
   return true;
 }
 
+/* 目前場地 + 目前查詢條件下的結果。畫面與匯出共用同一份，
+   兩邊才不會因為各算一次而出現落差。 */
+function searchHits(){
+  const wmap = Object.fromEntries(winsOf(mtVenue).map(w => [w.id, w]));
+  const mine = mtTasks.filter(t => wmap[t.window_id]);
+  const hits = mine.map(t => [t, wmap[t.window_id]])
+                   .filter(([t,w]) => mtPass(t, w))
+                   .sort((a,b) => String(b[1].week_date).localeCompare(a[1].week_date)
+                               || (a[0].seq||0) - (b[0].seq||0));
+  return {wmap, mine, hits};
+}
+
 function renderSearch(){
   if(!mtReady) return;
   const v = venueOf(mtVenue) || {};
@@ -1882,14 +1940,9 @@ function renderSearch(){
     buildSearchOptions();
   }
 
-  // 只在當前場地的資料裡找
-  const wmap = Object.fromEntries(winsOf(mtVenue).map(w => [w.id, w]));
-  const mine = mtTasks.filter(t => wmap[t.window_id]);
-  const hits = mine.map(t => [t, wmap[t.window_id]])
-                   .filter(([t,w]) => mtPass(t, w))
-                   .sort((a,b) => String(b[1].week_date).localeCompare(a[1].week_date)
-                               || (a[0].seq||0) - (b[0].seq||0));
+  const {mine, hits} = searchHits();
 
+  $("qExport").disabled = !hits.length;
   $("qCount").textContent = `共 ${hits.length} 筆`;
   $("qHint").textContent  = hits.length > MAX_ROWS
     ? `（${esc(v.title || mtVenue)}共 ${mine.length} 筆，畫面只顯示最新 ${MAX_ROWS} 筆，請縮小查詢範圍）`
@@ -2280,6 +2333,7 @@ $("wnDel").addEventListener("click", async () => {
 QF.forEach(id => $(id).addEventListener("change", onFilterChange));
 $("qText").addEventListener("input", onFilterChange);
 $("qClear").addEventListener("click", () => { writeFilters(null); onFilterChange(); });
+$("qExport").addEventListener("click", exportSearch);
 function onFilterChange(){
   mtFilterBy[mtVenue] = readFilters();      // 邊改邊記，切走再切回來條件還在
   renderSearch();
