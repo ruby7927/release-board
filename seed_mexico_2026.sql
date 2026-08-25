@@ -221,7 +221,7 @@ Hedy', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
 1.百家點數加總錯誤修正
 2.骰類 Auto Run One Card Drawn Delay (1/1000) 可設定
 3.洗牌機功能 Dealer ID 錯誤修正
-4.10桌改自動更新', '09:00'::time, '09:30'::time, NULL, 'pending', NULL),
+4.10桌改自動更新', '09:00'::time, '09:30'::time, NULL, 'done', NULL),
   ('MX', '2026-08-26'::date, 7, 'Proxy server', 'Fanny', 'ProxySetting 15桌追加外部線路', NULL::time, NULL::time, NULL, 'pending', NULL),
   ('MX', '2026-08-26'::date, 8, '降噪服務', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-08-26'::date, 9, '翻譯系統', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
@@ -301,8 +301,8 @@ Hedy', 'MX7F Multi-bitrate架構轉換', '07:30'::time, '09:00'::time, NULL, 'do
 3. 移除EROU 73桌，該桌將移給ROU使用
 4. Multi-bitrate架構調整', '07:30'::time, '08:35'::time, 65, 'done', NULL),
   ('MX', '2026-08-12'::date, 5, '辨識系統五合一', 'Rossi', '無', NULL::time, NULL::time, NULL, 'na', NULL),
-  ('MX', '2026-08-12'::date, 6, 'DS System', 'Fanny', 'DS 35.5 1.：骰類隨機腳本code併入正式版(尚未開放啟用)', '07:30'::time, '09:00'::time, 90, 'pending', NULL),
-  ('MX', '2026-08-12'::date, 7, 'Proxy server', 'Fanny', 'Proxy設定更改：10桌對外Endpoint調整', '07:30'::time, '09:00'::time, 90, 'pending', NULL),
+  ('MX', '2026-08-12'::date, 6, 'DS System', 'Fanny', 'DS 35.5 1.：骰類隨機腳本code併入正式版(尚未開放啟用)', '07:30'::time, '09:00'::time, 90, 'done', NULL),
+  ('MX', '2026-08-12'::date, 7, 'Proxy server', 'Fanny', 'Proxy設定更改：10桌對外Endpoint調整', '07:30'::time, '09:00'::time, 90, 'done', NULL),
   ('MX', '2026-08-12'::date, 8, '降噪服務', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-08-12'::date, 9, '翻譯系統', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-08-12'::date, 10, '現場管理', 'Ivy、Julie、Amira、Cyndi、Sheila', '1. Change the poker cards：All bacarrat and DG
@@ -313,14 +313,14 @@ Table #132 (0425SA4)
 Table #127 (0311TA3)
 Table #151 (0527X02)
 3. 更換132桌的桌板', NULL::time, NULL::time, NULL, 'pending', NULL),
-  ('MX', '2026-08-12'::date, 11, 'CAD Server', 'Neroal', 'Server 重啟', '08:00'::time, '08:02'::time, 2, 'pending', NULL),
+  ('MX', '2026-08-12'::date, 11, 'CAD Server', 'Neroal', 'Server 重啟', '08:00'::time, '08:02'::time, 2, 'done', NULL),
   ('MX', '2026-08-12'::date, 12, 'Dealer Monitor (風控)', 'Neroal', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-08-12'::date, 13, 'Shoes Monitor (牌靴監控)', 'Neroal', '無', NULL::time, NULL::time, NULL, 'na', NULL),
-  ('MX', '2026-08-12'::date, 14, 'Roadmap (路子圖)', 'Neroal', '更新百家龍虎圖示', '08:00'::time, '08:02'::time, 2, 'pending', NULL),
+  ('MX', '2026-08-12'::date, 14, 'Roadmap (路子圖)', 'Neroal', '更新百家龍虎圖示', '08:00'::time, '08:02'::time, 2, 'done', NULL),
   ('MX', '2026-08-12'::date, 15, 'Chat Room (聊天室)', 'Neroal', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-08-12'::date, 16, 'Data Center (資料中心)', 'Neroal', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-08-12'::date, 17, 'OP後台', 'Zach', '1.Prod 環境的 MySQL 系統強制資料庫升級
-2.Game Live State API 新增 Response 欄位, 當前遊戲桌狀態', '07:30'::time, '09:00'::time, 90, 'pending', NULL),
+2.Game Live State API 新增 Response 欄位, 當前遊戲桌狀態', '07:30'::time, '09:00'::time, 90, 'done', NULL),
   ('MX', '2026-08-05'::date, 1, 'Studio(OP)', 'Stantly、John、Edith', '1.Restart All Proxy-Server
 2.Reboot Dealer PC
 3.Reboot Streaming System(Included Encoder & Camera-PC)
@@ -339,7 +339,7 @@ Table #151 (0527X02)
   ('MX', '2026-08-05'::date, 5, 'DS System', 'Fanny', 'DS 35.4.1
 1.龍虎、百家達最大局數，會跳出告警提醒換靴
 2.百家最大局數改為75局
-3.若觸發最大局數同時按下DS Setting 視窗的Confirm，會補發洗牌APP通知燈號改換靴', '09:00'::time, '09:30'::time, 30, 'pending', NULL),
+3.若觸發最大局數同時按下DS Setting 視窗的Confirm，會補發洗牌APP通知燈號改換靴', '09:00'::time, '09:30'::time, 30, 'done', NULL),
   ('MX', '2026-08-05'::date, 6, 'Proxy server', 'Fanny', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-08-05'::date, 7, '降噪服務', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-08-05'::date, 8, '翻譯系統', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
@@ -376,8 +376,8 @@ Table #126 (0311TA2)
 4. 泰國魚蝦蟹全滿版畫面調整', '07:15'::time, '08:15'::time, 60, 'done', NULL),
   ('MX', '2026-07-29'::date, 4, '辨識系統五合一', 'Rossi', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-07-29'::date, 5, 'DS System', 'Fanny', 'DS 35.3
-1.龍虎、百家達最大局數，會跳出告警提醒換靴', '09:00'::time, '09:30'::time, 30, 'pending', NULL),
-  ('MX', '2026-07-29'::date, 6, 'Proxy server', 'Fanny', '紳士廳 7.8桌設定外部廠商Endpoint', '05:00'::time, '07:00'::time, 120, 'pending', NULL),
+1.龍虎、百家達最大局數，會跳出告警提醒換靴', '09:00'::time, '09:30'::time, 30, 'done', NULL),
+  ('MX', '2026-07-29'::date, 6, 'Proxy server', 'Fanny', '紳士廳 7.8桌設定外部廠商Endpoint', '05:00'::time, '07:00'::time, 120, 'done', NULL),
   ('MX', '2026-07-29'::date, 7, '降噪服務', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-07-29'::date, 8, '翻譯系統', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-07-29'::date, 9, '現場管理', 'Ivy、Julie、Amira、Cyndi、Sheila', '1. Change the poker cards：All bacarrat and DG
@@ -504,7 +504,7 @@ Table #151 (0523X01)
   ('MX', '2026-07-08'::date, 12, 'Roadmap (路子圖)', 'Neroal', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-07-08'::date, 13, 'Chat Room (聊天室)', 'Neroal', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-07-08'::date, 14, 'Data Center (資料中心)', 'Neroal', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
-  ('MX', '2026-07-08'::date, 15, 'OP後台', 'Zach', '新增13桌外部開關桌設定(9:00後開始可使用)', '08:45'::time, '09:00'::time, 15, 'pending', NULL),
+  ('MX', '2026-07-08'::date, 15, 'OP後台', 'Zach', '新增13桌外部開關桌設定(9:00後開始可使用)', '08:45'::time, '09:00'::time, 15, 'done', NULL),
   ('MX', '2026-07-01'::date, 1, 'Studio(OP)', 'Stantly、John、Edith', '1.Restart All Proxy-Server
 2.Reboot Dealer PC
 3.Reboot Streaming System(Included Encoder & Camera-PC)
@@ -668,7 +668,7 @@ Table #151 (1017X02)', NULL::time, NULL::time, NULL, 'pending', NULL),
 Table #121 (1210SA1)
 Table #131 (1211SA1)
 Table #126 (0307TA4)
-Table #151 (1017X01)', '05:00'::time, '07:00'::time, NULL, 'pending', NULL),
+Table #151 (1017X01)', '05:00'::time, '07:00'::time, NULL, 'done', NULL),
   ('MX', '2026-06-03'::date, 10, 'Dealer Monitor', 'JimLin', '1. Shoes Monitor會加上 PROD UAT 標籤', '08:30'::time, NULL::time, NULL, 'pending', NULL),
   ('MX', '2026-06-03'::date, 11, '路子圖、Chat Room', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-06-03'::date, 12, 'Data Center(每桌info)', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
@@ -703,7 +703,7 @@ Table #151 (1017X01)', '05:00'::time, '07:00'::time, NULL, 'pending', NULL),
 Table #121 (1204SA1)
 Table #131 (1204SA2)
 Table #126 (0307TA1)
-Table #151 (1016X03)', '05:00'::time, '07:00'::time, NULL, 'pending', NULL),
+Table #151 (1016X03)', '05:00'::time, '07:00'::time, NULL, 'done', NULL),
   ('MX', '2026-05-27'::date, 10, 'Dealer Monitor', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-05-27'::date, 11, '路子圖、Chat Room', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-05-27'::date, 12, 'Data Center(每桌info)', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
@@ -735,7 +735,7 @@ Table #151 (1016X03)', '05:00'::time, '07:00'::time, NULL, 'pending', NULL),
 Table #121 (1121SA2)
 Table #131 (1126SA1)
 Table #126 (0912TA1)
-Table #151 (1016X02)', '08:00'::time, '09:00'::time, NULL, 'pending', NULL),
+Table #151 (1016X02)', '08:00'::time, '09:00'::time, NULL, 'done', NULL),
   ('MX', '2026-05-20'::date, 10, 'Dealer Monitor', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-05-20'::date, 11, '路子圖、Chat Room', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-05-20'::date, 12, 'Data Center(每桌info)', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
@@ -758,7 +758,7 @@ Table #151 (1016X02)', '08:00'::time, '09:00'::time, NULL, 'pending', NULL),
 3. 修正報表API queryTxnReport, queryRoundReport', '08:00'::time, '08:35'::time, 35, 'done', NULL),
   ('MX', '2026-05-13'::date, 4, '辨識系統五合一', 'Rossi', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-05-13'::date, 5, 'DS System', 'Fanny', '1.DS 34.25 (百家 2桌) 風控新版上線
-2DS 34.25.0.1 (色碟 151桌) 色碟 No draw優化', '09:00'::time, '09:00'::time, NULL, 'pending', NULL),
+2DS 34.25.0.1 (色碟 151桌) 色碟 No draw優化', '09:00'::time, '09:00'::time, NULL, 'done', NULL),
   ('MX', '2026-05-13'::date, 6, 'Proxy server', 'Fanny', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-05-13'::date, 7, '降噪服務', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-05-13'::date, 8, '翻譯系統', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
@@ -803,7 +803,7 @@ Table #151 ()', '08:00'::time, '09:00'::time, NULL, 'done', NULL),
 Table #121 (1105SA1)
 Table #131 (1105SA2)
 Table #126 (0911TA4)
-Table #151 (1015X01)', '08:00'::time, '09:00'::time, NULL, 'pending', NULL),
+Table #151 (1015X01)', '08:00'::time, '09:00'::time, NULL, 'done', NULL),
   ('MX', '2026-05-06'::date, 10, 'Dealer Monitor', 'JimLin', '1. 重啟SERVER', '08:30'::time, NULL::time, NULL, 'pending', NULL),
   ('MX', '2026-05-06'::date, 11, '路子圖、Chat Room', 'JimLin', '1. 重啟SERVER', '08:30'::time, NULL::time, NULL, 'pending', NULL),
   ('MX', '2026-05-06'::date, 12, 'Data Center(每桌info)', 'JimLin', '1. 重啟SERVER', '08:30'::time, NULL::time, NULL, 'pending', NULL),
@@ -826,7 +826,7 @@ Table #151 (1015X01)', '08:00'::time, '09:00'::time, NULL, 'pending', NULL),
   ('MX', '2026-04-29'::date, 4, '辨識系統五合一', 'Rossi', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-04-29'::date, 5, 'DS System', 'Fanny', '34.23
 1.TG告警分組功能
-2.龍虎開牌提示邏輯修正', '09:00'::time, '09:00'::time, NULL, 'pending', NULL),
+2.龍虎開牌提示邏輯修正', '09:00'::time, '09:00'::time, NULL, 'done', NULL),
   ('MX', '2026-04-29'::date, 6, 'Proxy server', 'Fanny', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-04-29'::date, 7, '降噪服務', 'Gary', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-04-29'::date, 8, '翻譯系統', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
@@ -857,7 +857,7 @@ Table #151 (1014X02)', NULL::time, NULL::time, NULL, 'done', NULL),
 4. 修正手機版泰骰&泰魚在賭桌內，斷線之後離開賭桌回到大廳，重新連上網路之後再次進桌，會持續顯示刷新連線的動畫', '08:00'::time, '08:40'::time, 40, 'done', NULL),
   ('MX', '2026-04-22'::date, 4, '辨識系統五合一', 'Rossi', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-04-22'::date, 5, 'DS System', 'Fanny', '34.22.1
-1.新增龍虎 無牌框UI切換版本', '09:00'::time, '09:00'::time, NULL, 'pending', NULL),
+1.新增龍虎 無牌框UI切換版本', '09:00'::time, '09:00'::time, NULL, 'done', NULL),
   ('MX', '2026-04-22'::date, 6, 'Proxy server', 'Fanny', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-04-22'::date, 7, '降噪服務', 'Gary', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-04-22'::date, 8, '翻譯系統', 'Gary', '版本更新', NULL::time, NULL::time, NULL, 'pending', NULL),
@@ -891,7 +891,7 @@ Table #151 (1014X01)', NULL::time, NULL::time, NULL, 'done', NULL),
 7. RandonPayResult新增欄位RoundStartTime
 8. ResultOdds新增欄位RoundStartTime', '07:30'::time, '08:40'::time, 70, 'done', NULL),
   ('MX', '2026-04-15'::date, 4, '辨識系統五合一', 'Rossi', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
-  ('MX', '2026-04-15'::date, 5, 'DS System', 'Fanny', '逐桌修改 Update.bat 檔', '07:30'::time, '09:00'::time, NULL, 'pending', NULL),
+  ('MX', '2026-04-15'::date, 5, 'DS System', 'Fanny', '逐桌修改 Update.bat 檔', '07:30'::time, '09:00'::time, NULL, 'done', NULL),
   ('MX', '2026-04-15'::date, 6, 'Proxy server', 'Fanny', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-04-15'::date, 7, '降噪服務', 'Gary', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-04-15'::date, 8, '現場管理', 'Ivy、Julie、Amira', '1. change the poker cards：All bacarrat and DG
@@ -1012,7 +1012,7 @@ Table #151 (1012X02)', NULL::time, NULL::time, NULL, 'done', NULL),
   ('MX', '2026-03-18'::date, 4, '辨識系統五合一', 'Rossi', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-03-18'::date, 5, 'DS System', 'Fanny', '1. DS 34.20，僅更換 B10 號桌
 2. DS系統設定檔雲化
-3. 龍虎雙鏡位系統支援', '08:15'::time, '08:30'::time, 15, 'pending', NULL),
+3. 龍虎雙鏡位系統支援', '08:15'::time, '08:30'::time, 15, 'done', NULL),
   ('MX', '2026-03-18'::date, 6, 'Proxy server', 'Fanny', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-03-18'::date, 7, '降噪服務', 'Gary', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-03-18'::date, 8, '現場管理', 'Ivy、Julie、Amira', '1. change the poker cards：All bacarrat and DG
@@ -1056,11 +1056,11 @@ Table #121 (0910SA1)
 Table #131 (0910SA2)
 Table #126 (0802TA5)
 Table #151 (1011X02)', NULL::time, NULL::time, NULL, 'done', NULL),
-  ('MX', '2026-03-11'::date, 9, 'Dealer Monitor', 'JimLin', '1. SERVER重啟', '08:10'::time, '08:20'::time, NULL, 'pending', NULL),
+  ('MX', '2026-03-11'::date, 9, 'Dealer Monitor', 'JimLin', '1. SERVER重啟', '08:10'::time, '08:20'::time, NULL, 'done', NULL),
   ('MX', '2026-03-11'::date, 10, '路子圖、Chat Room', 'JimLin', '1. Shoe Monitor: 配合 Data Center 進行調整
-2. SERVER重啟', '08:10'::time, '08:20'::time, NULL, 'pending', NULL),
+2. SERVER重啟', '08:10'::time, '08:20'::time, NULL, 'done', NULL),
   ('MX', '2026-03-11'::date, 11, 'Data Center(每桌info)', 'JimLin', '1. Data Center: 串接 OP 後台資料
-2. SERVER重啟', '08:10'::time, '08:20'::time, NULL, 'pending', NULL),
+2. SERVER重啟', '08:10'::time, '08:20'::time, NULL, 'done', NULL),
   ('MX', '2026-03-04'::date, 1, 'Studio(OP)', 'Stantly、John、Edith', '1.Restart All Proxy-Server
 2.Reboot Dealer PC
 3.Reboot Streaming System(Included Encoder & Camera-PC)
@@ -1209,7 +1209,7 @@ Table #151 (1010X01)', NULL::time, NULL::time, NULL, 'done', NULL),
 色碟 #151 (1008X01)
 4. 更換百家、龍虎遊戲桌板(布)', NULL::time, NULL::time, NULL, 'pending', NULL),
   ('MX', '2026-01-28'::date, 9, 'Dealer Monitor', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
-  ('MX', '2026-01-28'::date, 10, '路子圖、Chat Room', 'JimLin', '1. Chat Admin Msg： 新增網路異常時，自動重連功能', '07:00'::time, '07:05'::time, 5, 'pending', NULL),
+  ('MX', '2026-01-28'::date, 10, '路子圖、Chat Room', 'JimLin', '1. Chat Admin Msg： 新增網路異常時，自動重連功能', '07:00'::time, '07:05'::time, 5, 'done', NULL),
   ('MX', '2026-01-28'::date, 11, 'Data Center(每桌info)', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-01-28'::date, 12, 'Local Media Server', 'Evan', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-01-21'::date, 1, 'Studio(OP)', 'Stantly、John、Edith', '1.Restart All Proxy-Server
@@ -1241,7 +1241,7 @@ Table #151 (1010X01)', NULL::time, NULL::time, NULL, 'done', NULL),
 色碟 #151 (1007X03)', NULL::time, NULL::time, NULL, 'pending', NULL),
   ('MX', '2026-01-21'::date, 9, 'Dealer Monitor', 'JimLin', NULL, NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-01-21'::date, 10, '路子圖、Chat Room', 'JimLin', '無', NULL::time, NULL::time, NULL, 'na', NULL),
-  ('MX', '2026-01-21'::date, 11, 'Data Center(每桌info)', 'JimLin', '1.更新顯示P(PROD), U(UAT)圖像，方便判斷', '08:00'::time, '08:10'::time, 10, 'pending', NULL),
+  ('MX', '2026-01-21'::date, 11, 'Data Center(每桌info)', 'JimLin', '1.更新顯示P(PROD), U(UAT)圖像，方便判斷', '08:00'::time, '08:10'::time, 10, 'done', NULL),
   ('MX', '2026-01-21'::date, 12, 'Local Media Server', 'Evan', '無', NULL::time, NULL::time, NULL, 'na', NULL),
   ('MX', '2026-01-14'::date, 1, 'Studio(OP)', 'Stantly、John、Edith', '1.Restart All Proxy-Server
 2.Reboot Dealer PC

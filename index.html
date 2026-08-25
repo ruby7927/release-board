@@ -770,6 +770,7 @@
           <option value="done">完成</option>
           <option value="na">無更新項目</option>
         </select>
+        <div class="tip hidden" id="stLock">已填執行結束時間，狀態固定為「完成」。要改狀態請先清空結束時間。</div>
       </div>
 
       <div class="fld">
@@ -2041,6 +2042,7 @@ function openTaskForm(rec){
   $("tkLock").textContent = lockNote;
 
   tkCalc();
+  syncStatusByEnd();
   $("taskDlg").showModal();
 }
 
@@ -2053,12 +2055,15 @@ function tkCalc(){
 }
 ["inTkStart","inTkEnd"].forEach(id => $(id).addEventListener("change", tkCalc));
 
-/* 填了結束時間＝這項做完了，狀態直接帶成「完成」，省一個步驟。
-   只在使用者自己動結束時間時才跳，不會在開啟表單時偷改既有資料；
-   帶完仍可自己改回別的狀態。 */
-$("inTkEnd").addEventListener("change", () => {
-  if($("inTkEnd").value) $("inSt").value = "done";
-});
+/* 填了結束時間＝這項做完了，狀態一律是「完成」。
+   欄位會鎖住不讓改，清掉結束時間才會解鎖。存檔時也會再強制一次。 */
+function syncStatusByEnd(){
+  const done = !!$("inTkEnd").value;
+  if(done) $("inSt").value = "done";
+  $("inSt").disabled = done;
+  $("stLock").classList.toggle("hidden", !done);
+}
+$("inTkEnd").addEventListener("change", syncStatusByEnd);
 
 async function saveTask(){
   const w = curWin();
@@ -2074,11 +2079,12 @@ async function saveTask(){
   const s = $("inTkStart").value, e = $("inTkEnd").value;
   if(s && e && (Number(e.replace(":","")) <= Number(s.replace(":",""))))
     return showMsg("tkMsg", "結束時間需晚於開始時間。");
+  const st = e ? "done" : $("inSt").value;   // 有結束時間就一定是完成，不採信畫面上的值
   const by = editorName();   // 不讀畫面，直接取登入帳號
 
   // 封存後只送允許的欄位，連送都不送其他欄位，免得誤蓋掉歷史內容
   const payload = locked ? {
-    status:     $("inSt").value,
+    status:     st,
     start_time: s || null,
     end_time:   e || null,
     notes:      $("inTkNote").value.trim() || null,
@@ -2089,7 +2095,7 @@ async function saveTask(){
     system:     $("inSys").value.trim(),
     owner:      $("inOwn").value.trim() || null,
     details:    $("inDet").value.trim() || null,
-    status:     $("inSt").value,
+    status:     st,
     start_time: s || null,
     end_time:   e || null,
     notes:      $("inTkNote").value.trim() || null,
