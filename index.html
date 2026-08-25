@@ -331,6 +331,9 @@
   .fld label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px}
   .fld label .req{color:var(--danger);margin-left:2px}
   .fld .tip{font-size:11.5px;color:var(--ink-faint);margin-top:4px;line-height:1.5}
+  /* 填寫人：固定顯示登入帳號，做成不像輸入框的樣子，避免有人想去點它 */
+  .byname{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--ink);
+    background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:8px 11px}
   .two{display:flex;gap:10px;flex-wrap:wrap}
   .two > *{flex:1 1 190px}
   .fld.half{max-width:calc(50% - 5px)}
@@ -772,9 +775,9 @@
       </div>
 
       <div class="fld">
-        <label for="inBy">填寫人<span class="req">*</span></label>
-        <input type="text" id="inBy" placeholder="例：Tony" required>
-        <div class="tip">因為填寫不用帳號，這裡留下的名字就是修改紀錄的依據，請填本名或英文名。</div>
+        <label>填寫人</label>
+        <div class="byname" id="inBy"></div>
+        <div class="tip">以登入帳號為準，不可修改。這是修改紀錄的依據。</div>
       </div>
 
       <div class="msg err hidden" id="tkMsg"></div>
@@ -881,6 +884,8 @@ const emailOf  = () => session ? String(session.user.email || "").toLowerCase() 
 const domainOf = () => emailOf().split("@")[1] || "";
 const isAdmin  = () => ADMIN_EMAILS.includes(emailOf());
 const isStaff  = () => isAdmin() || STAFF_DOMAINS.includes(domainOf()) || STAFF_EXTRA.includes(emailOf());
+/* 填寫人一律用登入帳號的 @ 前半段；資料庫的 mt_stamp_editor trigger 會再蓋一次同樣的值 */
+const editorName = () => emailOf().split("@")[0];
 
 
 /* ---------- 日期工具（一律當作本地時間，不做時區轉換） ---------- */
@@ -1959,9 +1964,8 @@ function openTaskForm(rec){
                       || MCFG.defaultTaskStart || "08:00";
   $("inTkEnd").value   = rec ? (hhmm(rec.end_time) || "") : "";
   $("inTkNote").value  = rec ? (rec.notes || "") : "";
-  // 改成要登入之後，填寫人一律以帳號為準，不讓人自己打（資料庫也會再蓋一次）
-  $("inBy").value    = emailOf().split("@")[0];
-  $("inBy").readOnly = true;
+  // 填寫人一律以登入帳號為準：畫面只顯示不給改，資料庫的 trigger 還會再蓋一次
+  $("inBy").textContent = editorName() || "—";
 
   // 封存後只剩執行時間、狀態與備註可動，其餘欄位改成唯讀
   ["inSys","inOwn","inDet"].forEach(id => {
@@ -2005,8 +2009,7 @@ async function saveTask(){
   const s = $("inTkStart").value, e = $("inTkEnd").value;
   if(s && e && (Number(e.replace(":","")) <= Number(s.replace(":",""))))
     return showMsg("tkMsg", "結束時間需晚於開始時間。");
-  const by = $("inBy").value.trim();
-  if(!by) return showMsg("tkMsg", "請填寫「填寫人」，這是修改紀錄的依據。");
+  const by = editorName();   // 不讀畫面，直接取登入帳號
 
   // 封存後只送允許的欄位，連送都不送其他欄位，免得誤蓋掉歷史內容
   const payload = locked ? {
