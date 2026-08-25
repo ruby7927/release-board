@@ -68,7 +68,8 @@ window.APP_CONFIG = {
   manuals: [
     { name: "荷官排班系統",              url: "https://drive.google.com/drive/folders/1UAStUu8eOVIhpdZVxWVBhAz7qwbO-m1J?usp=sharing" },
     { name: "Incident Reporting System", url: "https://drive.google.com/drive/folders/1nH5zuOBlMbiBGJzKmWs_AdNDzaT00IGL?usp=sharing" },
-    { name: "請假系統",                  url: "https://drive.google.com/drive/folders/1PMcD-UastGpJHLeyLjMS9rCzRPhdgDY8?usp=sharing" }
+    { name: "請假系統",                  url: "https://drive.google.com/drive/folders/1PMcD-UastGpJHLeyLjMS9rCzRPhdgDY8?usp=sharing" },
+     { name: "MX薪資系統",                  url: "https://drive.google.com/drive/folders/1c58lK51uwVyocEfu3mYfOJr_1pndT_V0?usp=sharing" }
   ],
 
   // ---- 側邊分頁 4. 系統網址 ----
@@ -76,6 +77,7 @@ window.APP_CONFIG = {
   links: [
     { name: "荷官排班系統" },
     { name: "Incident Reporting System" },
-    { name: "請假系統" }
+    { name: "請假系統" },
+    { name: "MX薪資系統" }
   ]
 };
