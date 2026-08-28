@@ -10,6 +10,9 @@
 --   @united-link.com.tw 任何人      看得到 1234 全部分頁，可填寫維護排程
 --   tony.kuo@neutec.com.tw          只看得到 Maintenance Schedule，可填寫
 --   rubyruby790101@gmail.com        只看得到 Maintenance Schedule，可填寫
+--   ingrid.r@neumex.com.mx          只看得到 Maintenance Schedule，可填寫
+--   ivonne.m@neumex.com.mx          只看得到 Maintenance Schedule，可填寫
+--   supervision.presentadoras@neumex.com.mx   同上
 --   其他                             擋在登入牆外，什麼都看不到
 --
 -- 前提：schema.sql、schema_maintenance.sql、migration_manual_files.sql、
@@ -42,7 +45,10 @@ returns boolean language sql stable security definer set search_path = public as
     or lower(auth.jwt() ->> 'email') like '%@united-link.com.tw'
     or lower(auth.jwt() ->> 'email') in (
          'tony.kuo@neutec.com.tw',     -- 網域外的例外，一個一行
-         'rubyruby790101@gmail.com'
+         'rubyruby790101@gmail.com',
+         'ingrid.r@neumex.com.mx',
+         'ivonne.m@neumex.com.mx',
+         'supervision.presentadoras@neumex.com.mx'
        )
   , false)
 $$;
@@ -117,8 +123,11 @@ comment on function public.can_view_page is '該帳號看不看得到某個分�
 -- ============================================================
 -- 這些帳號只看得到維護排程（有指定＝只看得到指定的，其餘分頁自動關閉）
 insert into public.page_access (user_email, page_key) values
-  ('tony.kuo@neutec.com.tw',    'maint'),
-  ('rubyruby790101@gmail.com',  'maint')
+  ('tony.kuo@neutec.com.tw',                   'maint'),
+  ('rubyruby790101@gmail.com',                 'maint'),
+  ('ingrid.r@neumex.com.mx',                   'maint'),
+  ('ivonne.m@neumex.com.mx',                   'maint'),
+  ('supervision.presentadoras@neumex.com.mx',  'maint')
 on conflict do nothing;
 
 
