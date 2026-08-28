@@ -1859,8 +1859,11 @@ function renderWeek(){
 
   // 登入後多一顆刪除鈕，動作欄要跟著加寬
   $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable${isAdmin() ? " can-del" : ""}">
-    <thead><tr><th class="c-sys">System</th><th class="c-own">Owner</th><th>更新項目</th>
-      <th class="c-tim">執行時間</th><th class="c-st">狀態</th><th class="c-act"></th></tr></thead>
+    <thead><tr><th class="c-sys">系統 <span class="en">System</span></th>
+      <th class="c-own">負責人 <span class="en">Owner</span></th>
+      <th>更新項目 <span class="en">Task Details</span></th>
+      <th class="c-tim">執行時間 <span class="en">Time</span></th>
+      <th class="c-st">狀態 <span class="en">Status</span></th><th class="c-act"></th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
 }
 
