@@ -1851,7 +1851,7 @@ function renderWeek(){
     <td class="c-st"><span class="st ${t.status}">${ST_TXT[t.status] || t.status}</span>
         ${t.updated_by ? `<span class="by">${esc(t.updated_by)}</span>` : ""}</td>
     <td class="c-act"><span class="acts">
-      <button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "補填" : "Edit"}</button>
+      <button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "Update" : "Edit"}</button>
       ${isAdmin() ? `<button type="button" class="btn-danger btn-sm" data-tdel="${esc(t.id)}">刪除</button>` : ""}
     </span></td>
   </tr>`).join("");
