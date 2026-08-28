@@ -24,8 +24,8 @@ window.APP_CONFIG = {
     // 每個場地會產生兩個分頁：排程與歷史紀錄。
     // 順序就是選單順序，第一個是打開網站的預設頁。
     venues: [
-      { code: "CB", title: "Cebu Maintenance Schedule",   history: "Cebu歷史紀錄" },
-      { code: "MX", title: "Mexico Maintenance Schedule", history: "Mexico歷史紀錄" }
+      { code: "CB", title: "Cebu Maintenance Schedule",   history: "Cebu Maintenance History" },
+      { code: "MX", title: "Mexico Maintenance Schedule", history: "Mexico Maintenance History" }
     ],
 
     // 每週維護視窗的預設時段（建立新的一週時帶入）

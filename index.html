@@ -87,6 +87,7 @@
   #qExport:disabled{color:var(--ink-faint);border-color:var(--line);background:transparent;cursor:default}
   #qExport:disabled svg{opacity:.5}
   .ftable{width:100%;min-width:620px;border-collapse:collapse;font-size:14px;background:var(--surface)}
+  .mtable th .en,.ftable th .en{font-weight:400;font-size:11px;opacity:.75;letter-spacing:.02em}
   .ftable th{background:var(--bar);color:var(--bar-ink);font-size:12.5px;font-weight:700;text-align:left;
     padding:11px 14px;white-space:nowrap;border-bottom:1px solid var(--bar-line)}
   .ftable td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -546,14 +547,14 @@
       </button>
     </div>
     <section class="filters">
-      <div class="flabel">查詢條件</div>
+      <div class="flabel">查詢條件 Filters</div>
       <div class="frow">
         <div class="f grow">
-          <label for="qText">關鍵字</label>
+          <label for="qText">關鍵字 <span class="en">Keyword</span></label>
           <input type="search" id="qText" placeholder="搜尋更新項目、系統、負責人、備註…" autocomplete="off">
         </div>
         <div class="f dates">
-          <label for="qFrom">維護日期</label>
+          <label for="qFrom">維護日期 <span class="en">Date</span></label>
           <div class="drange">
             <input type="date" id="qFrom" aria-label="起始日期">
             <span>—</span>
@@ -562,9 +563,9 @@
         </div>
       </div>
       <div class="frow">
-        <div class="f"><label for="qSys">系統</label><select id="qSys"><option value="">全部</option></select></div>
-        <div class="f"><label for="qOwn">負責人</label><select id="qOwn"><option value="">全部</option></select></div>
-        <div class="f"><label for="qSt">狀態</label>
+        <div class="f"><label for="qSys">系統 <span class="en">System</span></label><select id="qSys"><option value="">全部</option></select></div>
+        <div class="f"><label for="qOwn">負責人 <span class="en">Owner</span></label><select id="qOwn"><option value="">全部</option></select></div>
+        <div class="f"><label for="qSt">狀態 <span class="en">Status</span></label>
           <select id="qSt">
             <option value="">全部</option>
             <option value="done">完成</option>
@@ -572,14 +573,14 @@
             <option value="na">無更新項目</option>
           </select>
         </div>
-        <div class="f"><label for="qDown">維護方式</label>
+        <div class="f"><label for="qDown">維護方式 <span class="en">Downtime</span></label>
           <select id="qDown">
             <option value="">全部</option>
             <option value="1">停機維護</option>
             <option value="0">不停機維護</option>
           </select>
         </div>
-        <button class="btn-ghost" id="qClear">清除條件</button>
+        <button class="btn-ghost" id="qClear">清除條件 Clear</button>
       </div>
     </section>
     <div class="summary"><span class="n" id="qCount">載入中…</span><span class="hint" id="qHint"></span></div>
@@ -1984,8 +1985,7 @@ function renderSearch(){
   </tr>`).join("");
 
   $("qBody").innerHTML = `<div class="tablewrap"><table class="mtable">
-    <thead><tr><th class="c-wk">維護日期</th><th class="c-sys">System</th><th class="c-own">Owner</th>
-      <th>更新項目</th><th class="c-tim">執行時間</th><th class="c-st">狀態</th></tr></thead>
+    <thead><tr><th class="c-wk">維護日期 <span class="en">Date</span></th><th class="c-sys">系統 <span class="en">System</span></th><th class="c-own">負責人 <span class="en">Owner</span></th><th>更新項目 <span class="en">Task Details</span></th><th class="c-tim">執行時間 <span class="en">Time</span></th><th class="c-st">狀態 <span class="en">Status</span></th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
 }
 
