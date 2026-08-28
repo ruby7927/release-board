@@ -13,6 +13,8 @@
 --   ingrid.r@neumex.com.mx          只看得到 Maintenance Schedule，可填寫
 --   ivonne.m@neumex.com.mx          只看得到 Maintenance Schedule，可填寫
 --   supervision.presentadoras@neumex.com.mx   同上
+--   bernard.liao@wisepointtech.com  只看得到 Maintenance Schedule，可填寫
+--   chris.yeh@wisepointtech.com     只看得到 Maintenance Schedule，可填寫
 --   其他                             擋在登入牆外，什麼都看不到
 --
 -- 前提：schema.sql、schema_maintenance.sql、migration_manual_files.sql、
@@ -48,7 +50,9 @@ returns boolean language sql stable security definer set search_path = public as
          'rubyruby790101@gmail.com',
          'ingrid.r@neumex.com.mx',
          'ivonne.m@neumex.com.mx',
-         'supervision.presentadoras@neumex.com.mx'
+         'supervision.presentadoras@neumex.com.mx',
+         'bernard.liao@wisepointtech.com',
+         'chris.yeh@wisepointtech.com'
        )
   , false)
 $$;
@@ -127,7 +131,9 @@ insert into public.page_access (user_email, page_key) values
   ('rubyruby790101@gmail.com',                 'maint'),
   ('ingrid.r@neumex.com.mx',                   'maint'),
   ('ivonne.m@neumex.com.mx',                   'maint'),
-  ('supervision.presentadoras@neumex.com.mx',  'maint')
+  ('supervision.presentadoras@neumex.com.mx',  'maint'),
+  ('bernard.liao@wisepointtech.com',           'maint'),
+  ('chris.yeh@wisepointtech.com',              'maint')
 on conflict do nothing;
 
 
