@@ -337,6 +337,8 @@
   .fld{margin-bottom:14px}
   .fld label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px}
   .fld label .req{color:var(--danger);margin-left:2px}
+  /* 欄位標題的英文：同一行、字級小一階、顏色淡一階，中文仍是主要視覺 */
+  .fld label .en{color:var(--ink-faint);font-weight:400;font-size:11.5px;letter-spacing:.02em}
   .fld .tip{font-size:11.5px;color:var(--ink-faint);margin-top:4px;line-height:1.5}
   /* 填寫人：固定顯示登入帳號，做成不像輸入框的樣子，避免有人想去點它 */
   .byname{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--ink);
@@ -746,25 +748,25 @@
       <div class="lockbar hidden" id="tkLock"></div>
       <div class="two">
         <div class="fld">
-          <label for="inSys">系統<span class="req">*</span></label>
+          <label for="inSys">系統 <span class="en">System</span><span class="req">*</span></label>
           <input type="text" id="inSys" list="sysList" placeholder="例：LCS" required>
           <datalist id="sysList"></datalist>
         </div>
         <div class="fld">
-          <label for="inOwn">負責人</label>
+          <label for="inOwn">負責人 <span class="en">Owner</span></label>
           <input type="text" id="inOwn" list="ownList" placeholder="例：Tony">
           <datalist id="ownList"></datalist>
         </div>
       </div>
 
       <div class="fld">
-        <label for="inDet">更新項目</label>
+        <label for="inDet">更新項目 <span class="en">Task Details</span></label>
         <textarea id="inDet" placeholder="一項一行，例：&#10;1. 百家樂新增注區&#10;2. 移除 EROU 73 桌"></textarea>
         <div class="tip">本週沒有要更新就填「無」，狀態選「無更新項目」。</div>
       </div>
 
       <div class="fld">
-        <label for="inSt">狀態<span class="req">*</span></label>
+        <label for="inSt">狀態 <span class="en">Status</span><span class="req">*</span></label>
         <select id="inSt">
           <option value="pending">待執行</option>
           <option value="done">完成</option>
@@ -774,7 +776,7 @@
       </div>
 
       <div class="fld">
-        <label>執行時間</label>
+        <label>執行時間 <span class="en">Start / End Time</span></label>
         <div class="two">
           <input type="time" id="inTkStart" aria-label="開始時間">
           <input type="time" id="inTkEnd" aria-label="結束時間">
@@ -782,15 +784,15 @@
         <div class="tip">GMT+8。做完再回來補即可，工時會自動算。<br>
           填了結束時間就代表做完了，狀態會自動改成「完成」。</div>
       </div>
-      <div class="fld"><div class="calc" id="tkCalc">工時：—</div></div>
+      <div class="fld"><div class="calc" id="tkCalc">工時 Duration：—</div></div>
 
       <div class="fld">
-        <label for="inTkNote">備註</label>
+        <label for="inTkNote">備註 <span class="en">Notes</span></label>
         <input type="text" id="inTkNote" placeholder="選填">
       </div>
 
       <div class="fld">
-        <label>填寫人</label>
+        <label>填寫人 <span class="en">Edited By</span></label>
         <div class="byname" id="inBy"></div>
         <div class="tip">以登入帳號為準，不可修改。這是修改紀錄的依據。</div>
       </div>
@@ -798,10 +800,10 @@
       <div class="msg err hidden" id="tkMsg"></div>
     </div>
     <div class="d-foot">
-      <button type="button" class="btn-danger hidden" id="tkDel">刪除</button>
+      <button type="button" class="btn-danger hidden" id="tkDel">Delete</button>
       <span style="flex:1"></span>
-      <button type="button" class="btn-ghost" data-close="taskDlg">取消</button>
-      <button type="submit" class="btn-primary" id="tkSubmit">儲存</button>
+      <button type="button" class="btn-ghost" data-close="taskDlg">Cancel</button>
+      <button type="submit" class="btn-primary" id="tkSubmit">Save</button>
     </div>
   </form>
 </dialog>
@@ -2018,7 +2020,9 @@ $("passDlg").addEventListener("close", () => { if(passResolve){ passResolve(fals
 function openTaskForm(rec){
   const locked = isLocked(curWin());
   mtEditing = rec ? rec.id : null;
-  $("tkTitle").textContent = !rec ? "新增維護項目" : locked ? "補填執行結果" : "填寫維護項目";
+  $("tkTitle").textContent = !rec ? "新增維護項目 New Task"
+                           : locked ? "補填執行結果 Update Result"
+                           : "填寫維護項目 Edit Task";
   $("tkMsg").classList.add("hidden");
   $("tkDel").classList.toggle("hidden", !(rec && isAdmin()));   // 只有管理者刪得掉
   $("inSys").value     = rec ? (rec.system || "") : "";
