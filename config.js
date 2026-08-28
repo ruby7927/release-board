@@ -25,7 +25,8 @@ window.APP_CONFIG = {
     // 順序就是選單順序，第一個是打開網站的預設頁。
     venues: [
       { code: "CB", title: "Cebu Maintenance Schedule",   history: "Cebu Maintenance History" },
-      { code: "MX", title: "Mexico Maintenance Schedule", history: "Mexico Maintenance History" }
+      { code: "MX", title: "Mexico Maintenance Schedule", history: "Mexico Maintenance History" },
+      { code: "SIV", title: "Siv Maintenance Schedule",   history: "Siv Maintenance History" }
     ],
 
     // 每週維護視窗的預設時段（建立新的一週時帶入）
@@ -51,9 +52,12 @@ window.APP_CONFIG = {
         { system: "賭具更換",          owner: "Michelle" },
         { system: "翻譯系統",          owner: "Gary"    }
       ],
-      // Mexico 已匯入 2026-08-12 那一週，之後都會沿用上一週，用不到這份預設清單。
+      // Mexico 已匯入歷史資料，之後都會沿用上一週，用不到這份預設清單。
       // 未來新增其他場地時，照 CB 的格式在這裡補一份即可。
-      MX: []
+      MX: [],
+      // Siv 還沒有任何資料，建立第一週時會是空的表格，自行按「＋ 新增項目」加。
+      // 若想一開始就帶出固定的系統清單，照 CB 的格式在這裡列出來即可。
+      SIV: []
     },
 
     // 共用編輯密碼：填了字串就會要求輸入才能填寫，留 null 代表不設限。
