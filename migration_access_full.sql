@@ -8,7 +8,7 @@
 --   ruby.hsieh@united-link.com.tw   管理者，看得到全部、可編輯全部
 --   @north.com.tw 任何人            看得到 1234 全部分頁，可填寫維護排程
 --   @united-link.com.tw 任何人      看得到 1234 全部分頁，可填寫維護排程
---   tony.kuo@neutec.com.tw          只看得到 Maintenance Schedule，可填寫
+--   tohsaka2001@gmail.com          只看得到 Maintenance Schedule，可填寫
 --   rubyruby790101@gmail.com        只看得到 Maintenance Schedule，可填寫
 --   ingrid.r@neumex.com.mx          只看得到 Maintenance Schedule，可填寫
 --   ivonne.m@neumex.com.mx          只看得到 Maintenance Schedule，可填寫
@@ -46,7 +46,7 @@ returns boolean language sql stable security definer set search_path = public as
        lower(auth.jwt() ->> 'email') like '%@north.com.tw'
     or lower(auth.jwt() ->> 'email') like '%@united-link.com.tw'
     or lower(auth.jwt() ->> 'email') in (
-         'tony.kuo@neutec.com.tw',     -- 網域外的例外，一個一行
+         'tohsaka2001@gmail.com',     -- 網域外的例外，一個一行
          'rubyruby790101@gmail.com',
          'ingrid.r@neumex.com.mx',
          'ivonne.m@neumex.com.mx',
@@ -127,7 +127,7 @@ comment on function public.can_view_page is '該帳號看不看得到某個分�
 -- ============================================================
 -- 這些帳號只看得到維護排程（有指定＝只看得到指定的，其餘分頁自動關閉）
 insert into public.page_access (user_email, page_key) values
-  ('tony.kuo@neutec.com.tw',                   'maint'),
+  ('tohsaka2001@gmail.com',                   'maint'),
   ('rubyruby790101@gmail.com',                 'maint'),
   ('ingrid.r@neumex.com.mx',                   'maint'),
   ('ivonne.m@neumex.com.mx',                   'maint'),
