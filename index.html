@@ -844,7 +844,26 @@
       </div>
       <div class="fld" id="rowWCopy">
         <label><input type="checkbox" id="inWCopy" checked style="width:auto;margin-right:6px">
-          帶入上一週的系統與負責人清單</label>
+          帶入系統與負責人清單</label>
+        <div id="srcPick">
+          <div class="tip" style="margin:8px 0 5px">從哪一週帶入</div>
+          <div class="cal-wrap">
+            <button type="button" class="cal-btn" id="srcBtn" aria-haspopup="dialog" aria-expanded="false">
+              <span id="srcBtnDate"></span>
+              <span class="cal-mark hidden" id="srcBtnMark"></span>
+              <span class="cal-caret">▾</span>
+            </button>
+            <div class="cal hidden" id="srcCal" role="dialog" aria-label="選擇要帶入的週次">
+              <div class="cal-head">
+                <button type="button" class="cal-nav" id="srcPrev" aria-label="上個月">←</button>
+                <b id="srcTitle"></b>
+                <button type="button" class="cal-nav" id="srcNext" aria-label="下個月">→</button>
+              </div>
+              <div class="cal-grid" id="srcGrid"></div>
+              <div class="cal-foot" id="srcHint"></div>
+            </div>
+          </div>
+        </div>
         <div class="tip" id="wnCopyTip"></div>
       </div>
       <div class="msg err hidden" id="wnMsg"></div>
@@ -1738,6 +1757,78 @@ function renderCal(){
   $("calHint").textContent = n ? `這個月有 ${n} 場維護` : "這個月沒有維護排程";
 }
 
+/* ---------- 建立新的一週：選擇要從哪一週帶入清單 ----------
+   跟上方週次選擇器共用同一套月曆樣式，只有排過維護的日子點得下去。 */
+let srcMonth = null, wnSrc = null;
+
+function renderSrcCal(){
+  const r = monthRange();
+  if(!r){ $("srcGrid").innerHTML = ""; $("srcTitle").textContent = ""; $("srcHint").textContent = "還沒有可帶入的週次"; return; }
+  if(!srcMonth) srcMonth = ymOf(wnSrc) || r.max;
+  if(srcMonth < r.min) srcMonth = r.min;
+  if(srcMonth > r.max) srcMonth = r.max;
+
+  const byDate = Object.fromEntries(winsOf(mtVenue).map(w => [w.week_date, w]));
+  const [y, m] = srcMonth.split("-").map(Number);
+  $("srcTitle").textContent = `${y} 年 ${m} 月`;
+  $("srcPrev").disabled = shiftMonth(srcMonth, -1) < r.min;
+  $("srcNext").disabled = shiftMonth(srcMonth,  1) > r.max;
+
+  const lead = new Date(y, m - 1, 1).getDay();
+  const days = new Date(y, m, 0).getDate();
+  let html = WD.map(d => `<div class="cal-wd">${d}</div>`).join("");
+  if(lead) html += `<div style="grid-column:span ${lead}"></div>`;
+  for(let d = 1; d <= days; d++){
+    const iso = `${y}-${pad(m)}-${pad(d)}`;
+    const w   = byDate[iso];
+    const cls = ["cal-day", w ? "has" : "", iso === wnSrc ? "on" : ""].filter(Boolean).join(" ");
+    const n   = w ? tasksOf(w.id).length : 0;
+    html += `<button type="button" class="${cls}" ${w ? `data-src="${iso}" title="${n} 個系統"` : "disabled"}>${d}</button>`;
+  }
+  $("srcGrid").innerHTML = html;
+  const cnt = winsOf(mtVenue).filter(w => w.week_date.startsWith(srcMonth)).length;
+  $("srcHint").textContent = cnt ? `這個月有 ${cnt} 場維護` : "這個月沒有維護排程";
+}
+
+function toggleSrcCal(show){
+  const cal = $("srcCal");
+  const open = show === undefined ? cal.classList.contains("hidden") : show;
+  if(open){ srcMonth = ymOf(wnSrc) || null; renderSrcCal(); }
+  cal.classList.toggle("hidden", !open);
+  $("srcBtn").setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+/* 更新來源週次的按鈕與說明文字 */
+function syncSrc(){
+  const on = $("inWCopy").checked;
+  $("srcPick").classList.toggle("hidden", !on);
+  const w = wnSrc ? winOf(mtVenue, wnSrc) : null;
+  const mark = !w ? "" : w.downtime === true ? "停機" : w.downtime === false ? "不停機" : "";
+  $("srcBtnDate").textContent = w ? w.week_date : "沒有可帶入的週次";
+  $("srcBtnMark").textContent = mark;
+  $("srcBtnMark").classList.toggle("hidden", !mark);
+  $("srcBtn").disabled = !winsOf(mtVenue).length;
+
+  const v = venueOf(mtVenue) || {};
+  const carry = carryDetailsOf(mtVenue);
+  if(!on){
+    $("wnCopyTip").textContent = "建立後表格是空的，請逐列新增。";
+  } else if(w){
+    const n = tasksOf(w.id).length;
+    $("wnCopyTip").textContent =
+      `會帶入 ${w.week_date} 的 ${n} 個系統與負責人，更新項目留空給各 Owner 自己填`
+      + (carry.length ? `；${carry.join("、")} 的更新項目會一併帶入。` : "。");
+  } else {
+    const n = defaultRowsOf(mtVenue).length;
+    $("wnCopyTip").textContent = n
+      ? `${v.title || mtVenue} 還沒有可參考的週次，會帶入 config.js 裡設定的 ${n} 個系統。`
+      : `${v.title || mtVenue} 還沒有可參考的週次，config.js 也沒設定預設系統，建立後請逐列新增。`;
+  }
+}
+
+/* 這些系統的更新項目每週幾乎一樣，連同清單一起帶入，省得重打 */
+const carryDetailsOf = v => ((MCFG.carryDetails || {})[v] || []);
+
 function toggleCal(show){
   const cal = $("wkCal");
   const open = show === undefined ? cal.classList.contains("hidden") : show;
@@ -2171,17 +2262,16 @@ function openWinForm(rec){
     $("wnSubmit").textContent = "建立";
   }
 
-  // 「帶入上一週清單」只在建立新的一週時才有意義
+  // 「帶入清單」只在建立新的一週時才有意義
   $("rowWCopy").classList.toggle("hidden", !!rec);
   $("inWCopy").checked = !rec;
   // 刪整週會連底下的任務一起清掉，只給管理者
   $("wnDel").classList.toggle("hidden", !(rec && isAdmin()));
   if(!rec){
-    const n = last ? tasksOf(last.id).length : defaultRowsOf(mtVenue).length;
-    $("wnCopyTip").textContent = last
-      ? `會沿用 ${last.week_date} 的 ${n} 個系統與負責人，更新項目留空給各 Owner 自己填。`
-      : n ? `${v.title || mtVenue} 還沒有上一週可參考，會帶入 config.js 裡設定的 ${n} 個系統。`
-          : `${v.title || mtVenue} 還沒有上一週，config.js 也沒設定預設系統，建立後請逐列新增。`;
+    wnSrc = last ? last.week_date : null;   // 預設帶入最近的一週，可自行改選
+    srcMonth = null;
+    toggleSrcCal(false);
+    syncSrc();
   }
   $("winDlg").showModal();
 }
@@ -2230,14 +2320,17 @@ async function saveWindow(){
   if(error){ $("wnSubmit").disabled = false; return showMsg("wnMsg", "建立失敗：" + error.message); }
 
   if($("inWCopy").checked){
-    const last = winsOf(v)[0];
-    const src  = last ? tasksOf(last.id).map(t => ({ system: t.system, owner: t.owner }))
+    const from = wnSrc ? winOf(v, wnSrc) : null;
+    const src  = from ? tasksOf(from.id).map(t => ({ system: t.system, owner: t.owner, details: t.details }))
                       : defaultRowsOf(v);
+    // 這幾個系統的更新項目每週幾乎一樣，一起帶入；其餘留空給各 Owner 自己填
+    const carry = carryDetailsOf(v);
     if(src.length){
       const rows = src.map((r, i) => ({
         window_id: data.id, seq: i + 1,
         system: r.system, owner: r.owner || null,
-        details: "", status: "pending"
+        details: carry.includes(r.system) ? (r.details || null) : null,
+        status: "pending"
       }));
       const {error: e2} = await sb.from("maintenance_tasks").insert(rows);
       if(e2){ $("wnSubmit").disabled = false; return showMsg("wnMsg", "系統清單帶入失敗：" + e2.message); }
@@ -2262,11 +2355,30 @@ $("calGrid").addEventListener("click", e => {
   toggleCal(false);
   renderWeek();
 });
-// 點空白處或按 Esc 關掉月曆
-document.addEventListener("click", e => {
-  if(!$("wkCal").classList.contains("hidden") && !e.target.closest(".cal-wrap")) toggleCal(false);
+/* 建立新的一週：來源週次的月曆 */
+$("srcBtn").addEventListener("click", e => { e.stopPropagation(); toggleSrcCal(); });
+$("srcPrev").addEventListener("click", e => { e.stopPropagation(); srcMonth = shiftMonth(srcMonth, -1); renderSrcCal(); });
+$("srcNext").addEventListener("click", e => { e.stopPropagation(); srcMonth = shiftMonth(srcMonth,  1); renderSrcCal(); });
+$("srcGrid").addEventListener("click", e => {
+  const b = e.target.closest("[data-src]");
+  if(!b) return;
+  wnSrc = b.dataset.src;
+  toggleSrcCal(false);
+  syncSrc();
 });
-document.addEventListener("keydown", e => { if(e.key === "Escape") toggleCal(false); });
+$("inWCopy").addEventListener("change", syncSrc);
+
+// 點空白處或按 Esc 關掉月曆（兩個月曆都要）
+document.addEventListener("click", e => {
+  if(!$("srcCal").classList.contains("hidden") && !e.target.closest(".cal-wrap")) toggleSrcCal(false);
+  if(!$("wkCal").classList.contains("hidden")  && !e.target.closest(".cal-wrap")) toggleCal(false);
+});
+document.addEventListener("keydown", e => {
+  if(e.key !== "Escape") return;
+  // 月曆開著時只關月曆，不要連帶把整個對話框關掉
+  if(!$("srcCal").classList.contains("hidden")){ e.preventDefault(); toggleSrcCal(false); return; }
+  toggleCal(false);
+});
 
 $("wkPrev").addEventListener("click", () => stepWeek(1));    // 清單是遞減排序，往後一格＝更舊的一週
 $("wkNext").addEventListener("click", () => stepWeek(-1));
