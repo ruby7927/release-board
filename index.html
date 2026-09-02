@@ -1941,8 +1941,8 @@ function renderWeek(){
     <td class="c-sys">${esc(t.system)}</td>
     <td class="c-own">${esc(t.owner || "—")}</td>
     <td class="c-det${t.details === "無" ? " none" : ""}">${esc(t.details || "—")}${memo(t)}</td>
-    <td class="c-tim">${timeCell(t)}</td>
-    <td class="c-st"><span class="st ${t.status}">${ST_TXT[t.status] || t.status}</span>
+    <td class="c-tim">${timeCell(t, w)}</td>
+    <td class="c-st">${stCell(t, w)}
         ${t.updated_by ? `<span class="by">${esc(t.updated_by)}</span>` : ""}</td>
     <td class="c-act"><span class="acts">
       <button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "Update" : "Edit"}</button>
@@ -1974,7 +1974,7 @@ const CSV_COLS = [
   ["開始時間",  ([t])   => hhmm(t.start_time) || ""],
   ["結束時間",  ([t])   => hhmm(t.end_time) || ""],
   ["工時(分)",  ([t])   => t.duration_min != null ? String(t.duration_min) : ""],
-  ["狀態",      ([t])   => ST_TXT[t.status] || t.status || ""],
+  ["狀態",      ([t,w]) => { const s = effStatus(t, w); return ST_TXT[s] || s || ""; }],
   ["填寫人",    ([t])   => t.updated_by || ""],
   ["備註",      ([t])   => t.notes || ""]
 ];
@@ -2008,7 +2008,22 @@ function exportSearch(){
 const dur  = t => t.duration_min != null ? `<span class="by">${t.duration_min} 分</span>` : "";
 /* 無更新項目的列不顯示執行時間——那一格本來就沒有意義，
    顯示自動帶入的開始時間反而會讓人以為真的執行過。 */
-const timeCell = t => t.status === "na" ? "—" : esc(fmtRange(t.start_time, t.end_time)) + dur(t);
+
+/* ---------- 實際顯示的狀態 ----------
+   維護日過了以後，還是「待執行」但更新項目空白或填「無」的，一律視為無更新項目。
+   資料庫裡仍是 pending，這裡只做判定；之後若補上更新項目就會自己變回待執行，
+   從編輯視窗存檔時才會把 na 真的寫回去。 */
+const NO_DETAIL = /^(無|no|none|n\/?a|[-–—])$/i;
+const noDetail = t => !t.details || NO_DETAIL.test(String(t.details).trim());
+function effStatus(t, w){
+  if(t.status !== "pending") return t.status;
+  const d = w && w.week_date;
+  return (d && todayStr() > d && noDetail(t)) ? "na" : t.status;
+}
+
+const timeCell = (t, w) => effStatus(t, w) === "na" ? "—" : esc(fmtRange(t.start_time, t.end_time)) + dur(t);
+const stCell   = (t, w) => { const s = effStatus(t, w);
+  return `<span class="st ${s}">${ST_TXT[s] || s}</span>`; };
 const memo = t => t.notes ? `<div class="c-memo"><b>備註　</b>${esc(t.notes)}</div>` : "";
 
 /* ---------- 1.3 / 1.4 各場地歷史紀錄 ---------- */
@@ -2023,7 +2038,7 @@ function mtPass(t, w){
   if(to   && d > to)   return false;
   if(sys && t.system !== sys) return false;
   if(own && !String(t.owner||"").toLowerCase().includes(own.toLowerCase())) return false;
-  if(st  && t.status !== st) return false;
+  if(st  && effStatus(t, w) !== st) return false;   // 依畫面顯示的狀態篩選，才不會查不到
   if(dn  && String(w && w.downtime === true ? 1 : w && w.downtime === false ? 0 : "") !== dn) return false;
   if(kw){
     const hay = [t.system, t.owner, t.details, t.notes, t.updated_by, d].join(" ").toLowerCase();
@@ -2079,8 +2094,8 @@ function renderSearch(){
     <td class="c-sys">${esc(t.system)}</td>
     <td class="c-own">${esc(t.owner || "—")}</td>
     <td class="c-det${t.details === "無" ? " none" : ""}">${esc(t.details || "—")}${memo(t)}</td>
-    <td class="c-tim">${timeCell(t)}</td>
-    <td class="c-st"><span class="st ${t.status}">${ST_TXT[t.status] || t.status}</span></td>
+    <td class="c-tim">${timeCell(t, w)}</td>
+    <td class="c-st">${stCell(t, w)}</td>
   </tr>`).join("");
 
   $("qBody").innerHTML = `<div class="tablewrap"><table class="mtable">
@@ -2127,7 +2142,9 @@ function openTaskForm(rec){
   $("inSys").value     = rec ? (rec.system || "") : "";
   $("inOwn").value     = rec ? (rec.owner  || "") : "";
   $("inDet").value     = rec ? (rec.details || "") : "";
-  $("inSt").value      = rec ? rec.status : "pending";
+  // 帶入畫面上顯示的狀態（過了維護日又沒填更新項目的會是「無更新項目」），
+  // 這樣按下儲存就會把它真的寫回資料庫
+  $("inSt").value      = rec ? effStatus(rec, curWin()) : "pending";
   // 開始時間沒填過就帶這一週維護時段的開始時間（早期幾週沒記時段，才退回設定值）；
   // 結束時間留空，做完才知道
   const win = curWin();
