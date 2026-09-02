@@ -1941,7 +1941,7 @@ function renderWeek(){
     <td class="c-sys">${esc(t.system)}</td>
     <td class="c-own">${esc(t.owner || "—")}</td>
     <td class="c-det${t.details === "無" ? " none" : ""}">${esc(t.details || "—")}${memo(t)}</td>
-    <td class="c-tim">${esc(fmtRange(t.start_time, t.end_time))}${dur(t)}</td>
+    <td class="c-tim">${timeCell(t)}</td>
     <td class="c-st"><span class="st ${t.status}">${ST_TXT[t.status] || t.status}</span>
         ${t.updated_by ? `<span class="by">${esc(t.updated_by)}</span>` : ""}</td>
     <td class="c-act"><span class="acts">
@@ -2006,6 +2006,9 @@ function exportSearch(){
 }
 
 const dur  = t => t.duration_min != null ? `<span class="by">${t.duration_min} 分</span>` : "";
+/* 無更新項目的列不顯示執行時間——那一格本來就沒有意義，
+   顯示自動帶入的開始時間反而會讓人以為真的執行過。 */
+const timeCell = t => t.status === "na" ? "—" : esc(fmtRange(t.start_time, t.end_time)) + dur(t);
 const memo = t => t.notes ? `<div class="c-memo"><b>備註　</b>${esc(t.notes)}</div>` : "";
 
 /* ---------- 1.3 / 1.4 各場地歷史紀錄 ---------- */
@@ -2076,7 +2079,7 @@ function renderSearch(){
     <td class="c-sys">${esc(t.system)}</td>
     <td class="c-own">${esc(t.owner || "—")}</td>
     <td class="c-det${t.details === "無" ? " none" : ""}">${esc(t.details || "—")}${memo(t)}</td>
-    <td class="c-tim">${esc(fmtRange(t.start_time, t.end_time))}${dur(t)}</td>
+    <td class="c-tim">${timeCell(t)}</td>
     <td class="c-st"><span class="st ${t.status}">${ST_TXT[t.status] || t.status}</span></td>
   </tr>`).join("");
 
