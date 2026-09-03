@@ -87,7 +87,8 @@
   #qExport:disabled{color:var(--ink-faint);border-color:var(--line);background:transparent;cursor:default}
   #qExport:disabled svg{opacity:.5}
   .ftable{width:100%;min-width:620px;border-collapse:collapse;font-size:14px;background:var(--surface)}
-  .mtable th .en,.ftable th .en{font-weight:400;font-size:11px;opacity:.75;letter-spacing:.02em}
+  .mtable th .en,.ftable th .en{display:block;font-weight:400;font-size:10.5px;opacity:.7;
+    letter-spacing:.02em;margin-top:1px}
   .ftable th{background:var(--bar);color:var(--bar-ink);font-size:12.5px;font-weight:700;text-align:left;
     padding:11px 14px;white-space:nowrap;border-bottom:1px solid var(--bar-line)}
   .ftable td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -255,8 +256,10 @@
   /* 更新項目不指定寬度，吃掉其餘空間 */
   .mtable .c-det{white-space:pre-wrap;line-height:1.7;overflow-wrap:anywhere;font-size:13px}
   .mtable .c-det.none{color:var(--ink-faint)}
-  .mtable .c-tim{width:118px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
-  .mtable .c-st {width:106px}   /* 容得下最長的狀態「無更新項目」 */
+  .mtable .c-tim{width:106px;padding-left:8px;padding-right:8px;font-family:var(--mono);
+    font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .mtable .c-st {width:92px;padding-left:8px;padding-right:8px}   /* 容得下最長的狀態「無更新項目」 */
+  .mtable .c-st .st{font-size:11px;padding:3px 8px}
   .mtable .c-act{width:98px;text-align:right}
   .mtable.can-del .c-act{width:150px}          /* 管理者登入後多一顆刪除鈕 */
   .mtable .c-act button{white-space:nowrap;padding:4px 8px}
@@ -273,7 +276,7 @@
     .mtable{font-size:13.5px}
     .mtable th,.mtable td{padding:9px 8px}
     .mtable .c-sys{width:16%}
-    .mtable .c-tim{width:104px}
+    .mtable .c-tim{width:98px}
     .mtable .c-act{width:88px}
     .mtable.can-del .c-act{width:136px}
   }
