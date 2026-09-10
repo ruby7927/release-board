@@ -15,6 +15,7 @@
 --   supervision.presentadoras@neumex.com.mx   同上
 --   bernard.liao@wisepointtech.com  只看得到 Maintenance Schedule，可填寫
 --   chris.yeh@wisepointtech.com     只看得到 Maintenance Schedule，可填寫
+--   kokyong.tan@neutec.com.tw       只看得到 Maintenance Schedule，可填寫
 --   其他                             擋在登入牆外，什麼都看不到
 --
 -- 前提：schema.sql、schema_maintenance.sql、migration_manual_files.sql、
@@ -52,7 +53,8 @@ returns boolean language sql stable security definer set search_path = public as
          'ivonne.m@neumex.com.mx',
          'supervision.presentadoras@neumex.com.mx',
          'bernard.liao@wisepointtech.com',
-         'chris.yeh@wisepointtech.com'
+         'chris.yeh@wisepointtech.com',
+         'kokyong.tan@neutec.com.tw'
        )
   , false)
 $$;
@@ -133,7 +135,8 @@ insert into public.page_access (user_email, page_key) values
   ('ivonne.m@neumex.com.mx',                   'maint'),
   ('supervision.presentadoras@neumex.com.mx',  'maint'),
   ('bernard.liao@wisepointtech.com',           'maint'),
-  ('chris.yeh@wisepointtech.com',              'maint')
+  ('chris.yeh@wisepointtech.com',              'maint'),
+  ('kokyong.tan@neutec.com.tw',                'maint')
 on conflict do nothing;
 
 
