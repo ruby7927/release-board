@@ -27,7 +27,8 @@ create policy "read own delete access" on public.maint_delete_access
   using ( public.is_admin() or user_email = lower(auth.jwt() ->> 'email') );
 
 insert into public.maint_delete_access (user_email, venue) values
-  ('michelle.huang@united-link.com.tw', 'CB')
+  ('michelle.huang@united-link.com.tw', 'CB'),
+  ('rubyruby12091@gmail.com',           'CB')
 on conflict do nothing;
 
 -- ------------------------------------------------------------

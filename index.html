@@ -933,7 +933,8 @@ const STAFF_EXTRA    = [                                         // 網域外的
   "supervision.presentadoras@neumex.com.mx",
   "bernard.liao@wisepointtech.com",
   "chris.yeh@wisepointtech.com",
-  "kokyong.tan@neutec.com.tw"
+  "kokyong.tan@neutec.com.tw",
+  "rubyruby12091@gmail.com"
 ];
 const emailOf  = () => session ? String(session.user.email || "").toLowerCase() : "";
 const domainOf = () => emailOf().split("@")[1] || "";
@@ -948,7 +949,8 @@ const editorName = () => emailOf().split("@")[0];
    調整順序只是改 seq，同仁本來就有 update 權限，不必另外設定。
    新增與修改仍然是所有同仁都能做。 */
 const MAINT_MANAGE = {
-  "michelle.huang@united-link.com.tw": ["CB"]
+  "michelle.huang@united-link.com.tw": ["CB"],
+  "rubyruby12091@gmail.com":           ["CB"]
 };
 const canManageMaint = v => isAdmin() || (MAINT_MANAGE[emailOf()] || []).includes(v);
 
