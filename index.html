@@ -261,6 +261,15 @@
   .mtable .c-st {width:92px;padding-left:8px;padding-right:8px}   /* 容得下最長的狀態「無更新項目」 */
   .mtable .c-st .st{font-size:11px;padding:3px 8px}
   .mtable .c-act{width:98px;text-align:right}
+  /* 管理者才有的上下移動鈕：做成一組小方塊，不搶 Edit／刪除的視覺 */
+  .mtable .sortbtns{display:inline-flex;flex-direction:column;gap:2px;margin-right:2px}
+  .mtable .sortb{padding:0;width:22px;height:15px;line-height:1;font-size:9px;
+    border:1px solid var(--line-strong);border-radius:3px;background:var(--surface);
+    color:var(--ink-soft);display:grid;place-items:center}
+  .mtable .sortb:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .mtable .sortb:disabled{opacity:.3;cursor:default}
+  .mtable.can-sort .c-act{width:150px}
+  .mtable.can-sort.can-del .c-act{width:200px}
   .mtable.can-del .c-act{width:150px}          /* 管理者登入後多一顆刪除鈕 */
   .mtable .c-act button{white-space:nowrap;padding:4px 8px}
   .mtable .c-act .acts{display:inline-flex;gap:5px;justify-content:flex-end}
@@ -1949,7 +1958,7 @@ function renderWeek(){
     return;
   }
 
-  const body = list.map(t => `<tr>
+  const body = list.map((t, i) => `<tr>
     <td class="c-sys">${esc(t.system)}</td>
     <td class="c-own">${esc(t.owner || "—")}</td>
     <td class="c-det${t.details === "無" ? " none" : ""}">${esc(t.details || "—")}${memo(t)}</td>
@@ -1957,13 +1966,17 @@ function renderWeek(){
     <td class="c-st">${stCell(t, w)}
         ${t.updated_by ? `<span class="by">${esc(t.updated_by)}</span>` : ""}</td>
     <td class="c-act"><span class="acts">
+      ${isAdmin() ? `<span class="sortbtns">
+        <button type="button" class="sortb" data-tup="${esc(t.id)}" title="上移" aria-label="上移"${i === 0 ? " disabled" : ""}>▲</button>
+        <button type="button" class="sortb" data-tdown="${esc(t.id)}" title="下移" aria-label="下移"${i === list.length - 1 ? " disabled" : ""}>▼</button>
+      </span>` : ""}
       <button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "Update" : "Edit"}</button>
       ${canDelMaint(mtVenue) ? `<button type="button" class="btn-danger btn-sm" data-tdel="${esc(t.id)}">刪除</button>` : ""}
     </span></td>
   </tr>`).join("");
 
-  // 登入後多一顆刪除鈕，動作欄要跟著加寬
-  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable${canDelMaint(mtVenue) ? " can-del" : ""}">
+  // 有刪除鈕、有排序鈕，動作欄都要跟著加寬
+  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable${canDelMaint(mtVenue) ? " can-del" : ""}${isAdmin() ? " can-sort" : ""}">
     <thead><tr><th class="c-sys">系統 <span class="en">System</span></th>
       <th class="c-own">負責人 <span class="en">Owner</span></th>
       <th>更新項目 <span class="en">Task Details</span></th>
@@ -2443,6 +2456,9 @@ $("wkBody").addEventListener("click", async e => {
     if(w && await ensureCanEdit()) openWinForm(w);
     return;
   }
+  const up = e.target.closest("[data-tup]"), dn = e.target.closest("[data-tdown]");
+  if(up || dn){ await moveTask((up || dn).dataset.tup || dn.dataset.tdown, up ? -1 : 1); return; }
+
   const ed = e.target.closest("[data-tedit]"), dl = e.target.closest("[data-tdel]");
   if(ed){
     const t = mtTasks.find(x => x.id === ed.dataset.tedit);
@@ -2453,6 +2469,44 @@ $("wkBody").addEventListener("click", async e => {
     if(t) await delTask(t);
   }
 });
+
+/* ---------- 調整排列順序（只有管理者） ----------
+   匯入的資料 seq 可能有跳號或重複，所以每次移動都把整週重新編成 1..n，
+   再只送真正變動的那幾列，避免整週都寫一次。 */
+let moving = false;
+async function moveTask(id, dir){
+  if(moving || !isAdmin()) return;
+  const w = curWin();
+  if(!w) return;
+  const list = tasksOf(w.id);
+  const i = list.findIndex(t => t.id === id);
+  const j = i + dir;
+  if(i < 0 || j < 0 || j >= list.length) return;
+
+  moving = true;
+  document.querySelectorAll(".sortb").forEach(b => { b.disabled = true; });
+
+  [list[i], list[j]] = [list[j], list[i]];                    // 換位置
+  const changed = list.map((t, k) => ({ t, seq: k + 1 }))     // 重新編號
+                      .filter(x => x.t.seq !== x.seq);
+
+  // 先改畫面，讓操作看起來是即時的；失敗再重讀還原
+  changed.forEach(x => { x.t.seq = x.seq; });
+  renderWeek();
+
+  for(const x of changed){
+    const {error} = await sb.from("maintenance_tasks").update({ seq: x.seq }).eq("id", x.t.id);
+    if(error){
+      moving = false;
+      alert("調整順序失敗：" + error.message);
+      await loadMaint();
+      renderWeek();
+      return;
+    }
+  }
+  moving = false;
+  renderWeek();
+}
 
 /* 刪除只有管理者做得到（RLS 也只放行 authenticated）。
    刪掉的內容不會消失——trigger 會把整列存進 maintenance_log。 */
