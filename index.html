@@ -942,13 +942,15 @@ const isStaff  = () => isAdmin() || STAFF_DOMAINS.includes(domainOf()) || STAFF_
 /* 填寫人一律用登入帳號的 @ 前半段；資料庫的 mt_stamp_editor trigger 會再蓋一次同樣的值 */
 const editorName = () => emailOf().split("@")[0];
 
-/* 維護排程的刪除權限：管理者不受限，其餘依場地逐一授權。
+/* 維護排程的管理權：刪除與調整排列順序。管理者不受限，其餘依場地逐一授權。
    ★ 這份名單要跟資料庫的 maint_delete_access 對應表一致 ★
-   只影響刪除；新增與修改仍然是所有同仁都能做。 */
-const MAINT_DELETE = {
+   刪除需要資料庫另外放行（見 migration_maint_delete.sql）；
+   調整順序只是改 seq，同仁本來就有 update 權限，不必另外設定。
+   新增與修改仍然是所有同仁都能做。 */
+const MAINT_MANAGE = {
   "michelle.huang@united-link.com.tw": ["CB"]
 };
-const canDelMaint = v => isAdmin() || (MAINT_DELETE[emailOf()] || []).includes(v);
+const canManageMaint = v => isAdmin() || (MAINT_MANAGE[emailOf()] || []).includes(v);
 
 
 /* ---------- 日期工具（一律當作本地時間，不做時區轉換） ---------- */
@@ -1958,6 +1960,10 @@ function renderWeek(){
     return;
   }
 
+  // 封存週的 seq 會被資料庫的封存保護還原，所以那時只有管理者能調整順序，
+  // 否則畫面移得動、重新整理又跳回去，反而讓人以為壞了
+  const canSort = canManageMaint(mtVenue) && !locked;
+
   const body = list.map((t, i) => `<tr>
     <td class="c-sys">${esc(t.system)}</td>
     <td class="c-own">${esc(t.owner || "—")}</td>
@@ -1966,17 +1972,17 @@ function renderWeek(){
     <td class="c-st">${stCell(t, w)}
         ${t.updated_by ? `<span class="by">${esc(t.updated_by)}</span>` : ""}</td>
     <td class="c-act"><span class="acts">
-      ${isAdmin() ? `<span class="sortbtns">
+      ${canSort ? `<span class="sortbtns">
         <button type="button" class="sortb" data-tup="${esc(t.id)}" title="上移" aria-label="上移"${i === 0 ? " disabled" : ""}>▲</button>
         <button type="button" class="sortb" data-tdown="${esc(t.id)}" title="下移" aria-label="下移"${i === list.length - 1 ? " disabled" : ""}>▼</button>
       </span>` : ""}
       <button type="button" class="btn-ghost btn-sm" data-tedit="${esc(t.id)}">${locked ? "Update" : "Edit"}</button>
-      ${canDelMaint(mtVenue) ? `<button type="button" class="btn-danger btn-sm" data-tdel="${esc(t.id)}">刪除</button>` : ""}
+      ${canManageMaint(mtVenue) ? `<button type="button" class="btn-danger btn-sm" data-tdel="${esc(t.id)}">刪除</button>` : ""}
     </span></td>
   </tr>`).join("");
 
   // 有刪除鈕、有排序鈕，動作欄都要跟著加寬
-  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable${canDelMaint(mtVenue) ? " can-del" : ""}${isAdmin() ? " can-sort" : ""}">
+  $("wkBody").innerHTML = banner + `<div class="tablewrap"><table class="mtable${canManageMaint(mtVenue) ? " can-del" : ""}${canSort ? " can-sort" : ""}">
     <thead><tr><th class="c-sys">系統 <span class="en">System</span></th>
       <th class="c-own">負責人 <span class="en">Owner</span></th>
       <th>更新項目 <span class="en">Task Details</span></th>
@@ -2163,7 +2169,7 @@ function openTaskForm(rec){
                            : locked ? "補填執行結果 Update Result"
                            : "填寫維護項目 Edit Task";
   $("tkMsg").classList.add("hidden");
-  $("tkDel").classList.toggle("hidden", !(rec && canDelMaint(mtVenue)));   // 有該場地刪除權才看得到
+  $("tkDel").classList.toggle("hidden", !(rec && canManageMaint(mtVenue)));   // 有該場地刪除權才看得到
   $("inSys").value     = rec ? (rec.system || "") : "";
   $("inOwn").value     = rec ? (rec.owner  || "") : "";
   $("inDet").value     = rec ? (rec.details || "") : "";
@@ -2313,7 +2319,7 @@ function openWinForm(rec){
   $("rowWCopy").classList.toggle("hidden", !!rec);
   $("inWCopy").checked = !rec;
   // 刪整週會連底下的任務一起清掉，只給管理者
-  $("wnDel").classList.toggle("hidden", !(rec && canDelMaint(mtVenue)));
+  $("wnDel").classList.toggle("hidden", !(rec && canManageMaint(mtVenue)));
   if(!rec){
     wnSrc = last ? last.week_date : null;   // 預設帶入最近的一週，可自行改選
     srcMonth = null;
@@ -2475,7 +2481,7 @@ $("wkBody").addEventListener("click", async e => {
    再只送真正變動的那幾列，避免整週都寫一次。 */
 let moving = false;
 async function moveTask(id, dir){
-  if(moving || !isAdmin()) return;
+  if(moving || !canManageMaint(mtVenue)) return;
   const w = curWin();
   if(!w) return;
   const list = tasksOf(w.id);
