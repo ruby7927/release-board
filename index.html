@@ -2494,15 +2494,22 @@ async function moveTask(id, dir){
   changed.forEach(x => { x.t.seq = x.seq; });
   renderWeek();
 
+  // (window_id, seq) 有唯一限制，直接改成目標序號會跟還沒讓位的那列撞號。
+  // 所以先把要動的列全部挪到不可能重複的負數，再一一設定最終值。
+  const fail = async msg => {
+    moving = false;
+    alert("調整順序失敗：" + msg);
+    await loadMaint();
+    renderWeek();
+  };
+  for(let k = 0; k < changed.length; k++){
+    const {error} = await sb.from("maintenance_tasks")
+      .update({ seq: -(k + 1) }).eq("id", changed[k].t.id);
+    if(error) return void await fail(error.message);
+  }
   for(const x of changed){
     const {error} = await sb.from("maintenance_tasks").update({ seq: x.seq }).eq("id", x.t.id);
-    if(error){
-      moving = false;
-      alert("調整順序失敗：" + error.message);
-      await loadMaint();
-      renderWeek();
-      return;
-    }
+    if(error) return void await fail(error.message);
   }
   moving = false;
   renderWeek();
