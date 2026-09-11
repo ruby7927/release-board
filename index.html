@@ -1009,6 +1009,7 @@ async function loadAll(){
   buildNav();
   route();
   load(); loadFiles(); loadMaint();
+  lastLoad = Date.now();
 }
 
 function applyAuthUI(){
@@ -1522,6 +1523,27 @@ const statusSig = now => rows.map(r => isSoon(r, now) ? "1" : "0").join("");
 function tick(){ if(rows.length && statusSig(nowKey()) !== lastSig) render(); }
 setInterval(tick, 60000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) tick(); });
+
+/* ---------- 切回分頁時重新讀取 ----------
+   資料只在開啟網頁時載入一次，頁面開著一整天就會一直看到舊資料，
+   別人填的東西看不到，還可能拿舊內容覆蓋掉人家的修改。
+   切回這個分頁、或視窗重新取得焦點時補讀一次；
+   間隔太短就不重讀，避免切來切去一直打 API。 */
+const REFRESH_GAP = 60000;         // 一分鐘內切回來不重讀
+let lastLoad = 0, refreshing = false;
+
+async function refreshData(force){
+  if(!sb || !isStaff() || refreshing) return;
+  if(!force && Date.now() - lastLoad < REFRESH_GAP) return;
+  // 對話框開著代表正在填寫，這時重讀會把畫面抽換掉
+  if(document.querySelector("dialog[open]")) return;
+  refreshing = true;
+  try { await Promise.all([load(), loadFiles(), loadMaint()]); lastLoad = Date.now(); }
+  finally { refreshing = false; }
+}
+
+document.addEventListener("visibilitychange", () => { if(!document.hidden) refreshData(); });
+window.addEventListener("focus", () => refreshData());
 
 /* 編輯器工具列：mousedown 先擋掉預設行為，才不會在按按鈕時失去選取範圍 */
 document.querySelector(".etool").addEventListener("mousedown", e => {
