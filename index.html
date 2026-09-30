@@ -950,7 +950,8 @@ const editorName = () => emailOf().split("@")[0];
    新增與修改仍然是所有同仁都能做。 */
 const MAINT_MANAGE = {
   "michelle.huang@united-link.com.tw": ["CB"],
-  "rubyruby12091@gmail.com":           ["CB"]
+  "rubyruby12091@gmail.com":           ["CB"],
+  "fanny.huang@north.com.tw":          ["MX"]
 };
 const canManageMaint = v => isAdmin() || (MAINT_MANAGE[emailOf()] || []).includes(v);
 

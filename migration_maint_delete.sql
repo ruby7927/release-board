@@ -28,7 +28,8 @@ create policy "read own delete access" on public.maint_delete_access
 
 insert into public.maint_delete_access (user_email, venue) values
   ('michelle.huang@united-link.com.tw', 'CB'),
-  ('rubyruby12091@gmail.com',           'CB')
+  ('rubyruby12091@gmail.com',           'CB'),
+  ('fanny.huang@north.com.tw',          'MX')
 on conflict do nothing;
 
 -- ------------------------------------------------------------
