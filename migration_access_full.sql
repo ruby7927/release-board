@@ -55,7 +55,8 @@ returns boolean language sql stable security definer set search_path = public as
          'bernard.liao@wisepointtech.com',
          'chris.yeh@wisepointtech.com',
          'kokyong.tan@neutec.com.tw',
-         'rubyruby12091@gmail.com'
+         'rubyruby12091@gmail.com',
+         'may.lee@siv-asia.com'
        )
   , false)
 $$;
