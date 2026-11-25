@@ -2,9 +2,11 @@
 -- 維護排程的刪除權限：依場地授權給指定帳號
 --
 -- 目前：michelle.huang@united-link.com.tw 可刪 Cebu（CB）的整週與單筆項目
+--       rubyruby12091@gmail.com           可刪 Cebu（CB）的整週與單筆項目
+--       fanny.huang@north.com.tw          可刪 Mexico（MX）的整週與單筆項目
 -- 管理者不受限；其餘同仁一律不能刪，但新增與修改不受影響。
 --
--- ★ 這份名單要跟 index.html 的 MAINT_DELETE 一致 ★
+-- ★ 這份名單要跟 index.html 的 MAINT_MANAGE 一致 ★
 -- 在 Supabase Dashboard → SQL Editor 貼上，整份執行一次。
 -- ============================================================
 
@@ -118,7 +120,7 @@ end $$;
 -- 再給一個人 Mexico 的刪除權：
 --   insert into public.maint_delete_access (user_email, venue)
 --     values ('someone@united-link.com.tw', 'MX') on conflict do nothing;
---   （index.html 的 MAINT_DELETE 也要加，否則畫面上看不到刪除鈕）
+--   （index.html 的 MAINT_MANAGE 也要加，否則畫面上看不到刪除鈕）
 --
 -- 收回：
 --   delete from public.maint_delete_access
